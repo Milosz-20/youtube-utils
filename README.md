@@ -9,6 +9,7 @@ A Firefox extension that bundles YouTube tweaks as switchable modules, plus Tamp
 | **Shorts** | Mode *Only from my subscriptions*: Home, search and the watch-page sidebar show Shorts only from channels you follow. Mode *Off completely*: all Shorts, shelves and the channel Shorts tab are hidden, and Shorts links open as normal videos. In both modes: Opening a Short plays just that one: no swiping, arrow keys, auto-advance or peeking at the next Short. Sidebar "Shorts" tab hidden. |
 | **Block the Shift + ? shortcuts menu** | Stops Shift + ? from opening YouTube's keyboard shortcuts overlay (typing "?" in text fields still works). |
 | **Default video quality** | Every new video starts in your chosen quality (e.g. 1080p) instead of Auto, falling back to the next lower one. Optional for Shorts. |
+| **SponsorBlock** | Skips sponsor segments from the community [SponsorBlock](https://sponsor.ajay.app) database — automatically (with an *Undo* notice) or via a *Skip* button in the player. Categories are selectable; segments are marked on the progress bar. Privacy: only a 4-character hash prefix of the video ID is sent. |
 | **Precise playback speed** | `Shift + >` / `Shift + <` changes speed in 0.05× steps with an on-video indicator. Step, min and max are configurable. |
 
 Each module has an on/off switch and its own settings on the options page. Changes apply to open YouTube tabs immediately.
@@ -62,7 +63,7 @@ Add `popup: true` to a setting to also show it in the toolbar popup.
 
 The options page reads the module list from `manifest.json`, so the new card and its settings appear automatically.
 
-Modules run in YouTube's own page context (like a `@grant none` userscript): they can call YouTube's player API (`#movie_player`) and `fetch` YouTube endpoints with your session. Always return a cleanup function so the module can be switched off without reloading the page.
+Modules run in YouTube's own page context (like a `@grant none` userscript): they can call YouTube's player API (`#movie_player`) and `fetch` YouTube endpoints with your session. Don't use `innerHTML` in modules — YouTube enforces Trusted Types and it throws; build elements with `createElement`. Always return a cleanup function so the module can be switched off without reloading the page.
 
 ## User scripts
 
