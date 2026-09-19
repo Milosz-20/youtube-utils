@@ -17,15 +17,19 @@
 
   // ---------------------------------------------------------------- load module definitions
   // The module list lives in manifest.json only; read it from there so adding a module is one edit.
-  const moduleFiles = browser.runtime.getManifest().content_scripts
-    .flatMap(cs => cs.js)
-    .filter(f => f.startsWith('modules/'));
+  // Firefox may hand back these paths as "modules/x.js", "/modules/x.js" or full moz-extension:// URLs.
+  const moduleFiles = [...new Set(browser.runtime.getManifest().content_scripts
+    .flatMap(cs => cs.js || [])
+    .map(f => (String(f).match(/(?:^|\/)(modules\/[^/]+\.js)$/) || [])[1])
+    .filter(Boolean))];
 
+  const loadErrors = [];
   for (const file of moduleFiles) {
     await new Promise(resolve => {
       const s = document.createElement('script');
-      s.src = '/' + file;
-      s.onload = s.onerror = resolve;
+      s.src = browser.runtime.getURL(file);
+      s.onload = resolve;
+      s.onerror = () => { loadErrors.push(file); resolve(); };
       document.head.appendChild(s);
     });
   }
@@ -89,6 +93,14 @@
   function renderModules() {
     const root = $('#modules');
     root.replaceChildren();
+    if (loadErrors.length || !YTU.modules.length) {
+      root.append(el('p', {
+        className: 'error',
+        textContent: loadErrors.length
+          ? `Couldn't load: ${loadErrors.join(', ')}`
+          : `No features found (module files seen in manifest: ${moduleFiles.length}).`,
+      }));
+    }
     for (const def of YTU.modules) {
       const cfg = current(def);
       const card = el('div', { className: 'card' + (cfg.enabled ? '' : ' disabled') });
