@@ -52,6 +52,16 @@ YTU.register({
       .ytu-sb-btn:hover { background: rgba(40,40,40,.9); }
       .ytu-sb-btn .ytu-sb-dot { width: 8px; height: 8px; border-radius: 50%; }
       .ytu-sb-btn .ytu-sb-undo { color: #3ea6ff; margin-left: 4px; }
+      /* The × fills the whole right end of the button, so a slightly-off click still closes it. */
+      .ytu-sb-btn:has(.ytu-sb-close) { padding-right: 0; }
+      .ytu-sb-btn .ytu-sb-close {
+        display: flex; align-items: center; justify-content: center;
+        align-self: stretch; width: 34px; margin: -8px 0 -8px 2px;
+        border-left: 1px solid rgba(255,255,255,.25); border-radius: 0 18px 18px 0;
+        font-size: 18px; line-height: 1; color: rgba(255,255,255,.7);
+      }
+      .ytu-sb-btn .ytu-sb-close:hover { background: rgba(255,255,255,.12); }
+      .ytu-sb-btn .ytu-sb-close:hover { color: #fff; }
       .ytp-autohide .ytu-sb-btn { bottom: 24px; }
       .ytu-sb-bar { position: absolute; inset: 0; pointer-events: none; z-index: 35; }
       .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .75; }
@@ -117,7 +127,7 @@ YTU.register({
     }
 
     // Builds the button contents without innerHTML — YouTube enforces Trusted Types.
-    function fillButton(b, seg, text, undo) {
+    function fillButton(b, seg, text, { undo = false, close = false } = {}) {
       const dot = document.createElement('span');
       dot.className = 'ytu-sb-dot';
       dot.style.background = COLORS[seg.category];
@@ -130,6 +140,13 @@ YTU.register({
         u.textContent = 'Undo';
         parts.push(u);
       }
+      if (close) {
+        const x = document.createElement('span');
+        x.className = 'ytu-sb-close';
+        x.textContent = '×';
+        x.title = 'Watch this segment';
+        parts.push(x);
+      }
       b.replaceChildren(...parts);
     }
 
@@ -138,9 +155,16 @@ YTU.register({
       if (!b || b.dataset.uuid === seg.uuid) return;
       clearTimeout(noticeTimer);
       b.dataset.uuid = seg.uuid;
-      fillButton(b, seg, `Skip ${LABELS[seg.category]} ⏭`, false);
+      fillButton(b, seg, `Skip ${LABELS[seg.category]} ⏭`, { close: true });
       b.onclick = e => {
         e.stopPropagation();
+        if (e.target.closest('.ytu-sb-close')) {
+          // Watch it: hide the button and leave this segment alone for the rest of the video.
+          ignored.add(seg.uuid);
+          hideButton();
+          drawBar();
+          return;
+        }
         skip(seg, false);
       };
     }
@@ -149,7 +173,7 @@ YTU.register({
       const b = ensureButton();
       if (!b) return;
       b.dataset.uuid = seg.uuid + ':done';
-      fillButton(b, seg, `Skipped ${LABELS[seg.category]}`, true);
+      fillButton(b, seg, `Skipped ${LABELS[seg.category]}`, { undo: true });
       b.onclick = e => {
         e.stopPropagation();
         ignored.add(seg.uuid);
