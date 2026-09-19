@@ -7,6 +7,7 @@ A Firefox extension that bundles YouTube tweaks as switchable modules, plus Tamp
 | Module | What it does |
 | --- | --- |
 | **Shorts: subscriptions only** | Home, search and the watch-page sidebar show Shorts only from channels you follow. Opening a Short plays just that one: no swiping, arrow keys, auto-advance or peeking at the next Short. Sidebar "Shorts" tab hidden. |
+| **Block the Shift + ? shortcuts menu** | Stops Shift + ? from opening YouTube's keyboard shortcuts overlay (typing "?" in text fields still works). |
 | **Precise playback speed** | `Shift + >` / `Shift + <` changes speed in 0.05× steps with an on-video indicator. Step, min and max are configurable. |
 
 Each module has an on/off switch and its own settings on the options page. Changes apply to open YouTube tabs immediately.
