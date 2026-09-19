@@ -1,9 +1,19 @@
-// Shorts from subscriptions only, and no doomscrolling in the Shorts player.
+// Shorts from subscriptions only (or none at all), and no doomscrolling in the Shorts player.
 YTU.register({
   id: 'shorts-subs-only',
-  name: 'Shorts: subscriptions only',
-  description: 'Feeds show Shorts only from channels you follow. Opening a Short plays just that one — no swiping to the next.',
+  name: 'Shorts',
+  description: 'Show Shorts only from channels you follow, or turn them off completely. Opening a Short plays just that one — no swiping to the next.',
   settings: {
+    mode: {
+      type: 'select',
+      label: 'Shorts',
+      default: 'subs',
+      popup: true,
+      options: [
+        { value: 'subs', label: 'Only from my subscriptions' },
+        { value: 'off', label: 'Off completely' },
+      ],
+    },
     filterFeeds: { type: 'boolean', label: 'Hide Shorts from channels I don\'t follow (Home, search, sidebar)', default: true },
     lockPlayer: { type: 'boolean', label: 'Lock the Shorts player to the Short I opened', default: true },
     hideShortsTab: { type: 'boolean', label: 'Hide the "Shorts" tab in the sidebar', default: true },
@@ -39,6 +49,20 @@ YTU.register({
       }
       if (s.hideShortsTab) {
         hide.push('ytd-guide-entry-renderer:has(a[title="Shorts"])', 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]');
+      }
+      if (s.mode === 'off') {
+        // Everywhere, including the Subscriptions feed and channel pages.
+        hide.push(
+          'ytm-shorts-lockup-view-model',
+          'ytm-shorts-lockup-view-model-v2',
+          'ytd-reel-shelf-renderer',
+          'ytd-rich-shelf-renderer[is-shorts]',
+          'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
+          'grid-shelf-view-model:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2)',
+          'ytd-guide-entry-renderer:has(a[title="Shorts"])',
+          'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
+          'yt-tab-shape[tab-title="Shorts"]',
+        );
       }
       let css = `${hide.join(',\n')} { display: none !important; }\n`;
       if (s.lockPlayer) {
@@ -296,7 +320,9 @@ YTU.register({
     }
 
     function filterItems() {
-      if (!s.filterFeeds || document.documentElement.hasAttribute('data-ssf-feed') || shortIdFromUrl()) return;
+      const off = s.mode === 'off';
+      if (shortIdFromUrl()) return;
+      if (!off && (!s.filterFeeds || document.documentElement.hasAttribute('data-ssf-feed'))) return;
 
       for (const a of document.querySelectorAll('a[href^="/shorts/"]')) {
         const lockup = a.closest(LOCKUP_SEL);
@@ -310,6 +336,7 @@ YTU.register({
         item.dataset.ssfId = id;
         delete item.dataset.ssfDone;
 
+        if (off) { setItemState(item, lockup, false); item.dataset.ssfDone = '1'; continue; }
         if (!subs) { setItemState(item, lockup, false); continue; } // wait for subscription list
 
         const ch = item.querySelector('a[href^="/@"], a[href^="/channel/"]');
@@ -367,7 +394,10 @@ YTU.register({
     let stopped = false;
     let lastHref = null;
     function tick() {
-      if (s.lockPlayer && shortIdFromUrl()) hideNeighbours();
+      const sid = shortIdFromUrl();
+      // Shorts off: a Shorts link opens as a normal video instead of the Shorts player.
+      if (s.mode === 'off' && sid) { location.replace('/watch?v=' + sid); return; }
+      if (s.lockPlayer && sid) hideNeighbours();
       if (location.href === lastHref) return;
       lastHref = location.href;
       updatePageFlags();
@@ -390,10 +420,15 @@ YTU.register({
     disposers.push(() => observer && observer.disconnect());
 
     renderCss();
-    getSubs().catch(err => ctx.log(err.message));
+    if (s.mode === 'subs') getSubs().catch(err => ctx.log(err.message));
 
     ctx.onChange(changed => {
       renderCss();
+      if (changed.includes('mode')) {
+        resetCards();
+        scheduleFilter();
+        if (s.mode === 'subs') getSubs().catch(err => ctx.log(err.message));
+      }
       if (changed.includes('refreshSubs')) getSubs(true).catch(err => ctx.log(err.message));
       if (changed.includes('filterFeeds')) { resetCards(); scheduleFilter(); }
       if (changed.includes('lockPlayer')) { lockedId = shortIdFromUrl(); if (!s.lockPlayer) showNeighbours(); }
