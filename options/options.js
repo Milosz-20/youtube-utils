@@ -119,8 +119,12 @@
         }, `Enable ${def.name}`));
       card.append(head);
 
-      const fields = Object.entries(def.settings || {}).map(([k, spec]) => renderField(def, k, spec, cfg)).filter(Boolean);
-      if (fields.length && !isPopup) card.append(el('div', { className: 'card-body' }, ...fields));
+      // The toolbar popup only shows settings marked `popup: true`.
+      const fields = Object.entries(def.settings || {})
+        .filter(([, spec]) => !isPopup || spec.popup)
+        .map(([k, spec]) => renderField(def, k, spec, cfg))
+        .filter(Boolean);
+      if (fields.length) card.append(el('div', { className: 'card-body' }, ...fields));
       root.append(card);
     }
   }

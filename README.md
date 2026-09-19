@@ -58,6 +58,8 @@ If nothing happens on YouTube, open the Extensions menu (puzzle icon) and make s
 2. Add `"modules/my-feature.js"` to the page-world `content_scripts` entry in `manifest.json`, **before** `core/boot.js`.
 3. Reload the extension in `about:debugging`.
 
+Add `popup: true` to a setting to also show it in the toolbar popup.
+
 The options page reads the module list from `manifest.json`, so the new card and its settings appear automatically.
 
 Modules run in YouTube's own page context (like a `@grant none` userscript): they can call YouTube's player API (`#movie_player`) and `fetch` YouTube endpoints with your session. Always return a cleanup function so the module can be switched off without reloading the page.

@@ -8,6 +8,7 @@ YTU.register({
       type: 'select',
       label: 'Preferred quality',
       default: 'hd1080',
+      popup: true, // also shown in the toolbar popup
       options: [
         { value: 'max', label: 'Highest available' },
         { value: 'hd2160', label: '2160p (4K)' },
