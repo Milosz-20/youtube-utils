@@ -35,7 +35,7 @@ YTU.register({
     };
     // Softened versions of SponsorBlock's category colours (same hues, less neon).
     const COLORS = {
-      sponsor: '#4caf6a', selfpromo: '#d4c24a', interaction: '#a866d1', intro: '#4bb3bd',
+      sponsor: '#3dc25f', selfpromo: '#d4c24a', interaction: '#a866d1', intro: '#4bb3bd',
       outro: '#5566cc', preview: '#4a8fc2', filler: '#7d63c9', music_offtopic: '#d18f45',
     };
 
@@ -64,7 +64,7 @@ YTU.register({
       .ytu-sb-btn .ytu-sb-close:hover { color: #fff; }
       .ytp-autohide .ytu-sb-btn { bottom: 24px; }
       .ytu-sb-bar { position: absolute; inset: 0; pointer-events: none; z-index: 35; }
-      .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .6; }
+      .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .68; }
     `;
     (document.head || document.documentElement).appendChild(style);
 
