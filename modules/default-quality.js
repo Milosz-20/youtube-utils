@@ -1,7 +1,7 @@
 // Picks your preferred quality whenever a new video starts, instead of YouTube's "Auto".
 YTU.register({
   id: 'default-quality',
-  name: 'Default video quality',
+  name: 'Video quality',
   description: 'Every new video starts in your chosen quality. If it isn\'t available, the next lower one is used. You can still change it per video from the ⚙ menu.',
   settings: {
     quality: {

@@ -110,6 +110,7 @@
     }
     for (const def of YTU.modules) {
       const cfg = current(def);
+      if (isPopup) { root.append(renderCompactRow(def, cfg)); continue; }
       const card = el('div', { className: 'card' + (cfg.enabled ? '' : ' disabled') });
       const head = el('div', { className: 'card-head' },
         el('div', {}, el('h3', { textContent: def.name }), el('p', { textContent: def.description || '' })),
@@ -127,6 +128,48 @@
       if (fields.length) card.append(el('div', { className: 'card-body' }, ...fields));
       root.append(card);
     }
+  }
+
+  // Toolbar popup: one line per feature — name, ⓘ tooltip with the description, `popup: true` settings, switch.
+  function renderCompactRow(def, cfg) {
+    const row = el('div', { className: 'row-compact' + (cfg.enabled ? '' : ' disabled') });
+
+    const info = el('button', { className: 'info', type: 'button', textContent: 'i' });
+    info.setAttribute('aria-label', def.description || def.name);
+    const tip = el('div', { className: 'tip', textContent: def.description || '' });
+    tip.setAttribute('role', 'tooltip');
+    const showTip = () => {
+      document.body.append(tip);
+      const r = info.getBoundingClientRect();
+      const left = Math.max(8, Math.min(r.left - 12, innerWidth - tip.offsetWidth - 8));
+      // Below the icon, or above it when there isn't room.
+      const below = r.bottom + 6;
+      const top = below + tip.offsetHeight > innerHeight - 8 ? r.top - tip.offsetHeight - 6 : below;
+      Object.assign(tip.style, { left: left + 'px', top: Math.max(8, top) + 'px' });
+    };
+    const hideTip = () => tip.remove();
+    info.addEventListener('mouseenter', showTip);
+    info.addEventListener('focus', showTip);
+    info.addEventListener('mouseleave', hideTip);
+    info.addEventListener('blur', hideTip);
+
+    const controls = Object.entries(def.settings || {})
+      .filter(([, spec]) => spec.popup)
+      .map(([k, spec]) => renderField(def, k, spec, cfg))
+      .filter(Boolean)
+      .map(field => (field.classList.contains('field') ? field.lastElementChild : field)); // drop the text label
+
+    row.append(
+      el('span', { className: 'name', textContent: def.name }),
+      info,
+      el('span', { className: 'spacer' }),
+      ...controls,
+      switchInput(cfg.enabled, async v => {
+        row.classList.toggle('disabled', !v);
+        await save(def, 'enabled', v);
+      }, `Enable ${def.name}`),
+    );
+    return row;
   }
 
   renderModules();

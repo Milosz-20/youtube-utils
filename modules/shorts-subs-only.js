@@ -10,7 +10,7 @@ YTU.register({
       default: 'subs',
       popup: true,
       options: [
-        { value: 'subs', label: 'Only from my subscriptions' },
+        { value: 'subs', label: 'Subscriptions only' },
         { value: 'off', label: 'Off completely' },
       ],
     },
