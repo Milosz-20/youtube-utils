@@ -158,7 +158,7 @@ YTU.register({
       if (!b || b.dataset.uuid === seg.uuid) return;
       clearTimeout(noticeTimer);
       b.dataset.uuid = seg.uuid;
-      fillButton(b, seg, `Skip ${LABELS[seg.category]} ⏭`, { close: true });
+      fillButton(b, seg, `Skip ${LABELS[seg.category]}`, { close: true });
       b.onclick = e => {
         e.stopPropagation();
         if (e.target.closest('.ytu-sb-close')) {
