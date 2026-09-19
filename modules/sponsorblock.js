@@ -60,8 +60,7 @@ YTU.register({
         border-left: 1px solid rgba(255,255,255,.25); border-radius: 0 18px 18px 0;
         font-size: 18px; line-height: 1; color: rgba(255,255,255,.7);
       }
-      .ytu-sb-btn .ytu-sb-close:hover { background: rgba(255,255,255,.12); }
-      .ytu-sb-btn .ytu-sb-close:hover { color: #fff; }
+      .ytu-sb-btn .ytu-sb-close:hover { background: rgba(255,255,255,.12); color: #fff; }
       .ytp-autohide .ytu-sb-btn { bottom: 24px; }
       .ytu-sb-bar { position: absolute; inset: 0; pointer-events: none; z-index: 35; }
       .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .68; }
@@ -78,7 +77,6 @@ YTU.register({
     let bar = null;
 
     const player = () => document.querySelector('#movie_player');
-    const enabled = () => CATEGORIES.filter(c => s[c]);
     const isAd = () => { const p = player(); return !!(p && p.classList.contains('ad-showing')); };
 
     async function sha256Prefix(text) {
@@ -106,7 +104,12 @@ YTU.register({
       return p;
     }
 
-    const active = () => segments.filter(x => s[x.category] && !ignored.has(x.uuid));
+    // Segments of the categories you turned on — always drawn on the progress bar.
+    const marked = () => segments.filter(x => s[x.category]);
+    // Segments that can still be skipped / offered (not undone).
+    const active = () => marked().filter(x => !ignored.has(x.uuid));
+    // Skip buttons closed with ×. Cleared on the next seek, so jumping into the segment brings the button back.
+    const dismissed = new Set();
 
     // -------------------------------------------------------------- skip button / notice
     function ensureButton() {
@@ -159,10 +162,9 @@ YTU.register({
       b.onclick = e => {
         e.stopPropagation();
         if (e.target.closest('.ytu-sb-close')) {
-          // Watch it: hide the button and leave this segment alone for the rest of the video.
-          ignored.add(seg.uuid);
+          // Watch it: hide the button. The segment stays marked on the progress bar.
+          dismissed.add(seg.uuid);
           hideButton();
-          drawBar();
           return;
         }
         skip(seg, false);
@@ -197,7 +199,7 @@ YTU.register({
     function check() {
       if (!video || isAd() || !segments.length) return;
       const t = video.currentTime;
-      const seg = active().find(x => t >= x.start && t < x.end - 0.25);
+      const seg = active().find(x => t >= x.start && t < x.end - 0.25 && !(s.mode === 'manual' && dismissed.has(x.uuid)));
 
       if (!seg) {
         // Keep a "Skipped · Undo" notice up until its timer ends.
@@ -217,11 +219,11 @@ YTU.register({
         if (bar) { bar.remove(); bar = null; }
         return;
       }
-      const key = videoId + '|' + active().map(x => x.uuid).join(',');
+      const key = videoId + '|' + marked().map(x => x.uuid).join(',');
       if (bar && bar.parentElement === host && bar.dataset.key === key) return;
       if (!bar) { bar = document.createElement('div'); bar.className = 'ytu-sb-bar'; }
       bar.dataset.key = key;
-      bar.replaceChildren(...active().map(x => {
+      bar.replaceChildren(...marked().map(x => {
         const span = document.createElement('span');
         span.style.left = (x.start / dur) * 100 + '%';
         span.style.width = Math.max(0.2, ((x.end - x.start) / dur) * 100) + '%';
@@ -236,9 +238,21 @@ YTU.register({
       const p = player();
       const v = p && p.querySelector('video.html5-main-video, video');
       if (v === video) return;
-      if (video) video.removeEventListener('timeupdate', check);
+      if (video) {
+        video.removeEventListener('timeupdate', check);
+        video.removeEventListener('seeked', onSeeked);
+      }
       video = v;
-      if (video) video.addEventListener('timeupdate', check);
+      if (video) {
+        video.addEventListener('timeupdate', check);
+        video.addEventListener('seeked', onSeeked);
+      }
+    }
+
+    // Any seek (e.g. clicking the segment on the progress bar) brings closed Skip buttons back.
+    function onSeeked() {
+      dismissed.clear();
+      check();
     }
 
     function currentVideoId() {
@@ -255,6 +269,7 @@ YTU.register({
         videoId = id;
         segments = [];
         ignored.clear();
+        dismissed.clear();
         hideButton();
         if (id) {
           fetchSegments(id).then(list => {
@@ -277,7 +292,10 @@ YTU.register({
     return () => {
       clearInterval(timer);
       document.removeEventListener('yt-navigate-finish', poll);
-      if (video) video.removeEventListener('timeupdate', check);
+      if (video) {
+        video.removeEventListener('timeupdate', check);
+        video.removeEventListener('seeked', onSeeked);
+      }
       offChange();
       hideButton();
       if (bar) bar.remove();
