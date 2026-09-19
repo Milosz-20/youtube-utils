@@ -64,6 +64,7 @@ code { font: 12px ui-monospace, Consolas, monospace; background: var(--surface);
 .card.disabled .card-body { opacity: 0.5; pointer-events: none; }
 
 .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.field select,
 .field input[type="number"] {
   width: 90px;
   padding: 6px 8px;

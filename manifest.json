@@ -41,6 +41,7 @@
         "modules/shorts-subs-only.js",
         "modules/playback-speed.js",
         "modules/block-shortcuts-help.js",
+        "modules/default-quality.js",
         "core/boot.js"
       ],
       "run_at": "document_start",

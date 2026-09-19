@@ -78,6 +78,13 @@
       });
       return el('label', { className: 'field' }, el('span', { textContent: spec.label }), input);
     }
+    if (spec.type === 'select') {
+      const select = el('select', {},
+        ...spec.options.map(o => el('option', { value: o.value, textContent: o.label, selected: o.value === cfg[key] })));
+      select.setAttribute('aria-label', spec.label);
+      select.addEventListener('change', () => save(def, key, select.value));
+      return el('label', { className: 'field' }, el('span', { textContent: spec.label }), select);
+    }
     if (spec.type === 'action') {
       const btn = el('button', { className: 'secondary', textContent: spec.label });
       btn.onclick = async () => {
