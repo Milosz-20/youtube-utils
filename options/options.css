@@ -127,6 +127,8 @@ button:disabled { opacity: 0.5; cursor: default; }
   tab-size: 2;
 }
 
+.notice .hint { flex-basis: 100%; margin: 0; }
+
 /* Toolbar popup */
 body.popup { width: 380px; }
 body.popup header { padding: 12px 16px; }

@@ -154,12 +154,23 @@
 
   $('#us-grant').onclick = async () => {
     // Must be called straight from the click for Firefox to show the prompt.
-    const ok = await browser.permissions.request({ permissions: ['userScripts'] });
+    let ok = false;
+    try {
+      ok = await browser.permissions.request({ permissions: ['userScripts'] });
+    } catch (err) {
+      console.warn('[YouTube Utils] permission request failed', err);
+    }
     if (ok) {
       await browser.runtime.sendMessage({ type: 'sync-user-scripts' });
       refreshPermissionUi();
+    } else {
+      $('#us-grant-help').hidden = false;
     }
   };
+
+  // Picks up the permission when it's granted or revoked in about:addons.
+  browser.permissions.onAdded.addListener(refreshPermissionUi);
+  browser.permissions.onRemoved.addListener(refreshPermissionUi);
 
   let editingId = null;
 
