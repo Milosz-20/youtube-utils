@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube Utils</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon.svg" alt="" width="28" height="28">
+    <h1>YouTube Utils</h1>
+    <button id="open-options" class="link" hidden>Open full settings ↗</button>
+  </header>
+
+  <main>
+    <section>
+      <h2>Features</h2>
+      <p class="hint">Changes apply to open YouTube tabs right away.</p>
+      <div id="modules"></div>
+    </section>
+
+    <section id="user-scripts-section">
+      <h2>User scripts</h2>
+      <p class="hint">
+        Tampermonkey-style scripts that run on YouTube. Paste a script with a <code>==UserScript==</code> header;
+        <code>@name</code>, <code>@match</code> and <code>@run-at</code> are read from it. Basic <code>GM_*</code> functions
+        (getValue, setValue, deleteValue, addStyle) are provided.
+      </p>
+
+      <div id="us-permission" class="notice" hidden>
+        <span>User scripts need an extra permission in Firefox.</span>
+        <button id="us-grant">Allow user scripts</button>
+      </div>
+      <div id="us-unsupported" class="notice" hidden>
+        This Firefox version doesn't support the userScripts API (needs Firefox 136 or newer).
+      </div>
+
+      <div id="us-list"></div>
+      <button id="us-new">+ New script</button>
+
+      <form id="us-editor" hidden>
+        <textarea id="us-code" spellcheck="false" rows="18"></textarea>
+        <p id="us-error" class="error" hidden></p>
+        <div class="row">
+          <button type="submit">Save</button>
+          <button type="button" id="us-cancel" class="secondary">Cancel</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="../core/runtime.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

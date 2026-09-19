@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Utils",
+  "version": "1.0.0",
+  "description": "A toolbox of YouTube tweaks: Shorts from subscriptions only, precise playback speed, and your own user scripts.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-utils@milosz-20",
+      "strict_min_version": "128.0"
+    }
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "permissions": ["storage"],
+  "optional_permissions": ["userScripts"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "YouTube Utils",
+    "default_icon": "icons/icon.svg",
+    "default_popup": "options/options.html?popup=1"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": ["content/bridge.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": [
+        "core/runtime.js",
+        "modules/shorts-subs-only.js",
+        "modules/playback-speed.js",
+        "core/boot.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
