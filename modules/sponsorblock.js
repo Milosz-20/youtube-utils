@@ -33,10 +33,10 @@ YTU.register({
       sponsor: 'sponsor', selfpromo: 'self-promotion', interaction: 'reminder', intro: 'intro',
       outro: 'endcards', preview: 'preview', filler: 'filler', music_offtopic: 'non-music',
     };
-    // SponsorBlock's own category colours.
+    // Softened versions of SponsorBlock's category colours (same hues, less neon).
     const COLORS = {
-      sponsor: '#00d400', selfpromo: '#ffff00', interaction: '#cc00ff', intro: '#00ffff',
-      outro: '#0202ed', preview: '#008fd6', filler: '#7300ff', music_offtopic: '#ff9900',
+      sponsor: '#4caf6a', selfpromo: '#d4c24a', interaction: '#a866d1', intro: '#4bb3bd',
+      outro: '#5566cc', preview: '#4a8fc2', filler: '#7d63c9', music_offtopic: '#d18f45',
     };
 
     const style = document.createElement('style');
@@ -64,7 +64,7 @@ YTU.register({
       .ytu-sb-btn .ytu-sb-close:hover { color: #fff; }
       .ytp-autohide .ytu-sb-btn { bottom: 24px; }
       .ytu-sb-bar { position: absolute; inset: 0; pointer-events: none; z-index: 35; }
-      .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .75; }
+      .ytu-sb-bar span { position: absolute; top: 0; bottom: 0; opacity: .6; }
     `;
     (document.head || document.documentElement).appendChild(style);
 
