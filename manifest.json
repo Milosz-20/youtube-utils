@@ -1,7 +1,7 @@
 ﻿{
   "manifest_version": 3,
   "name": "YouTube Utils",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A toolbox of YouTube tweaks: Shorts from subscriptions only, precise playback speed, and your own user scripts.",
   "browser_specific_settings": {
     "gecko": {
