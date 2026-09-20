@@ -4,8 +4,12 @@ YTU.register({
   name: 'One Short at a time',
   description: 'Opening a Short plays only that one. Scrolling, swiping, the arrow keys and auto-advance can\'t move to the next Short, and no neighbouring Short peeks in at the bottom of the screen.',
 
+  settings: {
+    hideGlow: { type: 'boolean', label: 'Hide the ambient glow around the Short', default: true },
+  },
+
   // boot.js puts this in at document_start, before YouTube has drawn anything.
-  css: `
+  css: s => `
     ytd-shorts .navigation-container,
     ytd-shorts #navigation-button-up,
     ytd-shorts #navigation-button-down { display: none !important; }
@@ -40,10 +44,17 @@ YTU.register({
     ytd-shorts #shorts-inner-container:not([data-ytu-picked]) > .reel-video-in-sequence-new:not([id="0"]),
     ytd-shorts #shorts-inner-container[data-ytu-picked] > .reel-video-in-sequence-new:not([data-ytu-current]) {
       visibility: hidden !important;
-    }`,
+    }
+    ${s.hideGlow ? `
+    /* Ambient mode: the blurred, colour-bleeding halo around the Short. None of these hold
+       the video itself, so hiding them only removes the glow. */
+    ytd-shorts #cinematic-container,
+    ytd-shorts #shorts-cinematic-container,
+    ytd-shorts #cinematic-shorts-scrim { display: none !important; }` : ''}`,
 
   run(ctx) {
     const def = this; // boot.js calls def.run(ctx), so `this` is this definition
+    const s = ctx.settings;
     const disposers = [];
     const on = (target, type, fn, opts) => {
       target.addEventListener(type, fn, opts);
@@ -52,7 +63,7 @@ YTU.register({
 
     const style = document.createElement('style');
     style.id = 'ytu-shorts-lock-style';
-    style.textContent = def.css;
+    style.textContent = def.css(s);
     (document.head || document.documentElement).appendChild(style);
     disposers.push(() => style.remove());
 
@@ -222,6 +233,8 @@ YTU.register({
       lastHref = location.href;
       updateLock();
     }
+
+    disposers.push(ctx.onChange(() => { style.textContent = def.css(s); }));
 
     const interval = setInterval(tick, 200);
     disposers.push(() => clearInterval(interval));

@@ -7,7 +7,7 @@ A Firefox extension that bundles YouTube tweaks as switchable modules, plus Tamp
 | Module | What it does |
 | --- | --- |
 | **Shorts filter** | Mode *Subscriptions only*: Home, search and the watch-page sidebar show Shorts only from channels you follow. Mode *Hide all*: all Shorts, shelves and the channel Shorts tab are hidden, and Shorts links open as normal videos. The Subscriptions feed and channel pages are never filtered. Sidebar "Shorts" tab hidden. |
-| **One Short at a time** | Opening a Short plays only that one: scrolling, swiping, arrow keys and auto-advance can't move to the next Short, and no neighbouring Short peeks in at the bottom. Works on its own, whether or not the feed filter is on. |
+| **One Short at a time** | Opening a Short plays only that one: scrolling, swiping, arrow keys and auto-advance can't move to the next Short, and no neighbouring Short peeks in at the bottom. Adds a back arrow (and Esc) to leave the Short, since the player has none. Ambient mode's glow around the Short is hidden by default. Works on its own, whether or not the feed filter is on. |
 | **Precise playback speed** | `Shift + >` / `Shift + <` changes speed in 0.05× steps with an on-video indicator. Step, min and max are configurable. |
 | **Default video quality** | Every new video starts in your chosen quality (e.g. 1080p) instead of Auto, falling back to the next lower one. Optional for Shorts. |
 | **SponsorBlock** | Skips sponsor segments from the community [SponsorBlock](https://sponsor.ajay.app) database — automatically (with an *Undo* notice) or via a *Skip* button in the player. Categories are selectable; segments are marked on the progress bar. Privacy: only a 4-character hash prefix of the video ID is sent. |
