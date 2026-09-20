@@ -28,6 +28,15 @@ Each module has an on/off switch and its own settings on the options page. Chang
 
 If nothing happens on YouTube, open the Extensions menu (puzzle icon) and make sure YouTube Utils is allowed on youtube.com.
 
+## Releasing an update
+
+1. Change the code.
+2. `.\package.ps1` (patch bump) — also `minor`, `major`, `-Version 1.4.2` or `-NoBump`. It writes the new version into `manifest.json` and builds `..\youtube-utils-<version>.zip` with correct zip paths.
+3. Upload that zip at [addons.mozilla.org](https://addons.mozilla.org/developers/addon/youtube-utils/versions/submit/), pick **On your own**, source code **No**, submit.
+4. When signing finishes, download the `.xpi` from *Manage Status & Versions* and install it via `about:addons` → ⚙ → *Install Add-on From File*.
+
+AMO refuses a version number it has already seen, so always bump.
+
 ## Adding a module
 
 1. Create `modules/my-feature.js`:
