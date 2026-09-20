@@ -32,8 +32,12 @@ YTU.register({
       hide.push(
         `${NOT_FEED} ytm-shorts-lockup-view-model:not([data-ssf-ok])`,
         `${NOT_FEED} ytm-shorts-lockup-view-model-v2:not([data-ssf-ok])`,
-        // A shelf whose cards are still being checked: see updateShelves().
-        `${NOT_FEED} [data-ssf-pending]`,
+        // Shorts shelves stay hidden until every card in them has been checked, so the row
+        // doesn't appear empty, vanish and come back. "settled" is set by updateShelves();
+        // hiding by its absence means the rule already holds on the very first frame.
+        `${NOT_FEED} ytd-rich-section-renderer:has(a[href^="/shorts/"]):not([data-ssf-settled])`,
+        `${NOT_FEED} ytd-reel-shelf-renderer:not([data-ssf-settled])`,
+        `${NOT_FEED} grid-shelf-view-model:has(a[href^="/shorts/"]):not([data-ssf-settled])`,
       );
     }
     if (s.hideShortsTab) {
@@ -316,19 +320,19 @@ YTU.register({
         if (!cards.length) continue;
         shelf.toggleAttribute('data-ssf-hidden', cards.every(c => c.hasAttribute('data-ssf-hidden')));
         if (!shelf.dataset.ssfSince) shelf.dataset.ssfSince = String(Date.now());
-        const pending = cards.some(c => !c.dataset.ssfDone) && Date.now() - Number(shelf.dataset.ssfSince) < SETTLE_MS;
-        shelf.toggleAttribute('data-ssf-pending', pending);
-        waiting = waiting || pending;
+        const settled = cards.every(c => c.dataset.ssfDone) || Date.now() - Number(shelf.dataset.ssfSince) >= SETTLE_MS;
+        shelf.toggleAttribute('data-ssf-settled', settled);
+        waiting = waiting || !settled;
       }
       if (waiting && !settleTimer) settleTimer = setTimeout(() => { settleTimer = null; updateShelves(); }, 250);
     }
 
     // Removes every mark this module put on the page.
     function resetCards() {
-      for (const el of document.querySelectorAll('[data-ssf-hidden], [data-ssf-ok], [data-ssf-id], [data-ssf-pending]')) {
+      for (const el of document.querySelectorAll('[data-ssf-hidden], [data-ssf-ok], [data-ssf-id], [data-ssf-settled]')) {
         el.removeAttribute('data-ssf-hidden');
         el.removeAttribute('data-ssf-ok');
-        el.removeAttribute('data-ssf-pending');
+        el.removeAttribute('data-ssf-settled');
         delete el.dataset.ssfId;
         delete el.dataset.ssfDone;
         delete el.dataset.ssfSince;
