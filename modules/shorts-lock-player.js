@@ -20,11 +20,12 @@ YTU.register({
     .ytu-shorts-exit {
       position: fixed; z-index: 2500;
       display: flex; align-items: center; justify-content: center;
-      width: 44px; height: 44px; padding: 0;
+      width: 40px; height: 40px; padding: 0;
       border: none; border-radius: 50%;
       background: rgba(255, 255, 255, .12); color: #fff;
-      font: 400 22px/1 Roboto, Arial, sans-serif; cursor: pointer;
+      cursor: pointer;
     }
+    .ytu-shorts-exit svg { display: block; }
     .ytu-shorts-exit:hover { background: rgba(255, 255, 255, .24); }
     /* For about a second the Short plays in #initial-player-container, where the rounded corners
        belong to the container and the video sits inside it unclipped — so it starts off square.
@@ -154,7 +155,19 @@ YTU.register({
         exitBtn.type = 'button';
         exitBtn.title = 'Back to the feed (Esc)';
         exitBtn.setAttribute('aria-label', 'Back to the feed');
-        exitBtn.textContent = '←';
+        // Material "arrow back", the same shape YouTube uses. Built as nodes: innerHTML is
+        // blocked by Trusted Types on YouTube.
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('width', '24');
+        svg.setAttribute('height', '24');
+        svg.setAttribute('fill', 'currentColor');
+        svg.setAttribute('aria-hidden', 'true');
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', 'M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z');
+        svg.appendChild(path);
+        exitBtn.appendChild(svg);
         exitBtn.addEventListener('click', e => { e.stopPropagation(); leave(); });
       }
       if (exitBtn.parentElement !== document.body) document.body.appendChild(exitBtn);
