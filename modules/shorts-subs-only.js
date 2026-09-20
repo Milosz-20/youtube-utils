@@ -1,12 +1,12 @@
-// Shorts from subscriptions only (or none at all), and no doomscrolling in the Shorts player.
+// Shorts from subscriptions only, or no Shorts at all.
 YTU.register({
   id: 'shorts-subs-only',
-  name: 'Shorts',
-  description: 'Show Shorts only from channels you follow, or turn them off completely. Opening a Short plays just that one — no swiping to the next.',
+  name: 'Block Shorts',
+  description: 'Show Shorts only from channels you follow, or turn them off completely. Feeds, search results and the sidebar are filtered; the Subscriptions feed and channel pages are left alone.',
   settings: {
     mode: {
       type: 'select',
-      label: 'Shorts',
+      label: 'Show Shorts',
       default: 'subs',
       popup: true,
       options: [
@@ -15,7 +15,6 @@ YTU.register({
       ],
     },
     filterFeeds: { type: 'boolean', label: 'Hide Shorts from channels I don\'t follow (Home, search, sidebar)', default: true },
-    lockPlayer: { type: 'boolean', label: 'Lock the Shorts player to the Short I opened', default: true },
     hideShortsTab: { type: 'boolean', label: 'Hide the "Shorts" tab in the sidebar', default: true },
     cacheHours: { type: 'number', label: 'Refresh subscription list every (hours)', default: 12, min: 1, max: 168, step: 1 },
     refreshSubs: { type: 'action', label: 'Refresh subscription list now' },
@@ -64,19 +63,7 @@ YTU.register({
           'yt-tab-shape[tab-title="Shorts"]',
         );
       }
-      let css = `${hide.join(',\n')} { display: none !important; }\n`;
-      if (s.lockPlayer) {
-        css += `
-          ytd-shorts .navigation-container,
-          ytd-shorts #navigation-button-up,
-          ytd-shorts #navigation-button-down { display: none !important; }
-          ytd-shorts #shorts-inner-container {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            touch-action: none !important;
-          }`;
-      }
-      style.textContent = css;
+      style.textContent = `${hide.join(',\n')} { display: none !important; }`;
     }
 
     // -------------------------------------------------------------- helpers
@@ -234,71 +221,7 @@ YTU.register({
       return p;
     }
 
-    // -------------------------------------------------------------- Shorts player: one Short only
-    // The Short you opened is "locked". Swiping, arrow keys and auto-advance can't move off it.
-    let lockedId = null;
     const shortIdFromUrl = () => (location.pathname.match(/^\/shorts\/([\w-]+)/) || [])[1] || null;
-
-    function updateLock() {
-      const id = shortIdFromUrl();
-      if (!id || !s.lockPlayer) { lockedId = id; return; }
-      if (!lockedId) { lockedId = id; return; }
-      if (id !== lockedId) {
-        // Something moved the player to another Short — send it back.
-        for (const v of document.querySelectorAll('ytd-shorts video')) v.pause();
-        location.replace('/shorts/' + lockedId);
-      }
-    }
-
-    // The player stacks Shorts in slots, so the next one peeks in at the bottom.
-    // Hide every slot except the one centred on screen.
-    function slots() {
-      const box = document.querySelector('ytd-shorts #shorts-inner-container');
-      return box ? [...box.children].filter(k => k.classList.contains('reel-video-in-sequence-new') || /^\d+$/.test(k.id)) : [];
-    }
-
-    function hideNeighbours() {
-      const all = slots();
-      const mid = innerHeight / 2;
-      let current = null, best = Infinity;
-      for (const el of all) {
-        const r = el.getBoundingClientRect();
-        if (!r.height) continue;
-        const d = Math.abs((r.top + r.bottom) / 2 - mid);
-        if (d < best) { best = d; current = el; }
-      }
-      for (const el of all) {
-        const v = el === current ? '' : 'hidden';
-        if (el.style.visibility !== v) el.style.visibility = v;
-      }
-    }
-
-    function showNeighbours() {
-      for (const el of slots()) el.style.visibility = '';
-    }
-
-    const inTextField = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-
-    function blockScroll(e) {
-      if (!s.lockPlayer || !shortIdFromUrl()) return;
-      const t = e.target;
-      // Comments / description panels keep scrolling normally.
-      if (t.closest && t.closest('#shorts-panel-container, ytd-engagement-panel-section-list-renderer')) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-
-    function blockKeys(e) {
-      if (!s.lockPlayer || !shortIdFromUrl() || inTextField(e.target)) return;
-      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }
-
-    on(window, 'wheel', blockScroll, { capture: true, passive: false });
-    on(window, 'touchmove', blockScroll, { capture: true, passive: false });
-    on(window, 'keydown', blockKeys, true);
 
     // -------------------------------------------------------------- feed filtering
     // Every Short card is checked individually: kept if it's from a subscription, hidden otherwise.
@@ -397,11 +320,9 @@ YTU.register({
       const sid = shortIdFromUrl();
       // Shorts off: a Shorts link opens as a normal video instead of the Shorts player.
       if (s.mode === 'off' && sid) { location.replace('/watch?v=' + sid); return; }
-      if (s.lockPlayer && sid) hideNeighbours();
       if (location.href === lastHref) return;
       lastHref = location.href;
       updatePageFlags();
-      updateLock();
       scheduleFilter();
     }
 
@@ -431,7 +352,6 @@ YTU.register({
       }
       if (changed.includes('refreshSubs')) getSubs(true).catch(err => ctx.log(err.message));
       if (changed.includes('filterFeeds')) { resetCards(); scheduleFilter(); }
-      if (changed.includes('lockPlayer')) { lockedId = shortIdFromUrl(); if (!s.lockPlayer) showNeighbours(); }
     });
 
     return () => {
@@ -439,7 +359,6 @@ YTU.register({
       clearTimeout(filterTimer);
       for (const d of disposers) d();
       resetCards();
-      showNeighbours();
       document.documentElement.removeAttribute('data-ssf-feed');
     };
   },
