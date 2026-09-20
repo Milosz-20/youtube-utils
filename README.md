@@ -6,8 +6,8 @@ A Firefox extension that bundles YouTube tweaks as switchable modules, plus Tamp
 
 | Module | What it does |
 | --- | --- |
-| **Block Shorts** | Mode *Subscriptions only*: Home, search and the watch-page sidebar show Shorts only from channels you follow. Mode *Off completely*: all Shorts, shelves and the channel Shorts tab are hidden, and Shorts links open as normal videos. The Subscriptions feed and channel pages are never filtered. Sidebar "Shorts" tab hidden. |
-| **Lock Shorts player** | Opening a Short plays only that one: scrolling, swiping, arrow keys and auto-advance can't move to the next Short, and no neighbouring Short peeks in at the bottom. Works on its own, whether or not Block Shorts is on. |
+| **Shorts from** | Mode *My subscriptions*: Home, search and the watch-page sidebar show Shorts only from channels you follow. Mode *No one*: all Shorts, shelves and the channel Shorts tab are hidden, and Shorts links open as normal videos. The Subscriptions feed and channel pages are never filtered. Sidebar "Shorts" tab hidden. |
+| **One Short at a time** | Opening a Short plays only that one: scrolling, swiping, arrow keys and auto-advance can't move to the next Short, and no neighbouring Short peeks in at the bottom. Works on its own, whether or not the feed filter is on. |
 | **Block the Shift + ? shortcuts menu** | Stops Shift + ? from opening YouTube's keyboard shortcuts overlay (typing "?" in text fields still works). |
 | **Default video quality** | Every new video starts in your chosen quality (e.g. 1080p) instead of Auto, falling back to the next lower one. Optional for Shorts. |
 | **SponsorBlock** | Skips sponsor segments from the community [SponsorBlock](https://sponsor.ajay.app) database — automatically (with an *Undo* notice) or via a *Skip* button in the player. Categories are selectable; segments are marked on the progress bar. Privacy: only a 4-character hash prefix of the video ID is sent. |

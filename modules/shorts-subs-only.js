@@ -1,17 +1,17 @@
 // Shorts from subscriptions only, or no Shorts at all.
 YTU.register({
   id: 'shorts-subs-only',
-  name: 'Block Shorts',
+  name: 'Shorts from',
   description: 'Show Shorts only from channels you follow, or turn them off completely. Feeds, search results and the sidebar are filtered; the Subscriptions feed and channel pages are left alone.',
   settings: {
     mode: {
       type: 'select',
-      label: 'Show Shorts',
+      label: 'Show Shorts from',
       default: 'subs',
       popup: true,
       options: [
-        { value: 'subs', label: 'Subscriptions only' },
-        { value: 'off', label: 'Off completely' },
+        { value: 'subs', label: 'My subscriptions' },
+        { value: 'off', label: 'No one' },
       ],
     },
     filterFeeds: { type: 'boolean', label: 'Hide Shorts from channels I don\'t follow (Home, search, sidebar)', default: true },

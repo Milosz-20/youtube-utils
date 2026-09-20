@@ -1,7 +1,7 @@
 // Locks the Shorts player to the Short you opened: no swiping, no arrow keys, no auto-advance.
 YTU.register({
   id: 'shorts-lock-player',
-  name: 'Lock Shorts player',
+  name: 'One Short at a time',
   description: 'Opening a Short plays only that one. Scrolling, swiping, the arrow keys and auto-advance can\'t move to the next Short, and no neighbouring Short peeks in at the bottom of the screen.',
 
   run(ctx) {
