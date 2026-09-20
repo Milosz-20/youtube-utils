@@ -11,9 +11,21 @@ YTU.register({
     ytd-shorts #navigation-button-down { display: none !important; }
     ytd-shorts #shorts-inner-container {
       overflow: hidden !important;
-      overscroll-behavior: none !important;
-      touch-action: none !important;
+      /* Vertical only: "none" and "touch-action: none" also switch off the browser's sideways
+         swipe-to-go-back, which is how you leave a Short. */
+      overscroll-behavior-y: none !important;
+      touch-action: pan-x !important;
     }
+    /* Our own way out, since the Shorts player has no exit button of its own. */
+    .ytu-shorts-exit {
+      position: fixed; z-index: 2500;
+      display: flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; padding: 0;
+      border: none; border-radius: 50%;
+      background: rgba(255, 255, 255, .12); color: #fff;
+      font: 400 22px/1 Roboto, Arial, sans-serif; cursor: pointer;
+    }
+    .ytu-shorts-exit:hover { background: rgba(255, 255, 255, .24); }
     /* For about a second the Short plays in #initial-player-container, where the rounded corners
        belong to the container and the video sits inside it unclipped — so it starts off square.
        Round the video itself until the real slot takes over. */
@@ -101,7 +113,7 @@ YTU.register({
     let frame = 0;
     function schedulePick() {
       if (frame || !shortIdFromUrl()) return;
-      frame = requestAnimationFrame(() => { frame = 0; pickCurrent(); });
+      frame = requestAnimationFrame(() => { frame = 0; pickCurrent(); ensureExit(); });
     }
 
     let observing = false;
@@ -117,6 +129,42 @@ YTU.register({
 
     on(window, 'scroll', schedulePick, true);
     on(window, 'resize', schedulePick);
+
+    // -------------------------------------------------------------- the way out
+    let exitBtn = null;
+
+    function leave() {
+      const from = location.href;
+      history.back();
+      // Opened straight into a Short (new tab, pasted link): there is no feed to go back to.
+      setTimeout(() => { if (location.href === from) location.assign('/'); }, 400);
+    }
+
+    function ensureExit() {
+      const slot = document.querySelector('ytd-shorts #shorts-inner-container > .reel-video-in-sequence-new[data-ytu-current]')
+        || document.querySelector('ytd-shorts #shorts-inner-container > .reel-video-in-sequence-new')
+        || document.querySelector('ytd-shorts #initial-player-container');
+      if (!shortIdFromUrl() || !slot) {
+        if (exitBtn) { exitBtn.remove(); exitBtn = null; }
+        return;
+      }
+      if (!exitBtn) {
+        exitBtn = document.createElement('button');
+        exitBtn.className = 'ytu-shorts-exit';
+        exitBtn.type = 'button';
+        exitBtn.title = 'Back to the feed (Esc)';
+        exitBtn.setAttribute('aria-label', 'Back to the feed');
+        exitBtn.textContent = '←';
+        exitBtn.addEventListener('click', e => { e.stopPropagation(); leave(); });
+      }
+      if (exitBtn.parentElement !== document.body) document.body.appendChild(exitBtn);
+      // Beside the Short, not on top of YouTube's own controls.
+      const r = slot.getBoundingClientRect();
+      const left = Math.max(12, Math.round(r.left) - 56) + 'px';
+      const top = Math.max(72, Math.round(r.top) + 12) + 'px';
+      if (exitBtn.style.left !== left) exitBtn.style.left = left;
+      if (exitBtn.style.top !== top) exitBtn.style.top = top;
+    }
 
     // -------------------------------------------------------------- input blocking
     const inTextField = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
@@ -141,6 +189,12 @@ YTU.register({
       }
     }
 
+    function exitKey(e) {
+      if (e.key !== 'Escape' || !shortIdFromUrl() || inTextField(e.target) || document.fullscreenElement) return;
+      leave();
+    }
+
+    on(window, 'keydown', exitKey, true);
     on(window, 'wheel', blockScroll, { capture: true, passive: false });
     on(window, 'touchmove', blockScroll, { capture: true, passive: false });
     on(window, 'keydown', blockKeys, true);
@@ -150,6 +204,7 @@ YTU.register({
     function tick() {
       syncObserver();
       schedulePick();
+      ensureExit();
       if (location.href === lastHref) return;
       lastHref = location.href;
       updateLock();
@@ -164,6 +219,7 @@ YTU.register({
       if (frame) cancelAnimationFrame(frame);
       for (const d of disposers) d();
       clearMarks();
+      if (exitBtn) { exitBtn.remove(); exitBtn = null; }
     };
   },
 });
