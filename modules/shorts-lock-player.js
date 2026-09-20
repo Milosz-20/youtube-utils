@@ -14,6 +14,14 @@ YTU.register({
       overscroll-behavior: none !important;
       touch-action: none !important;
     }
+    /* For about a second the Short plays in #initial-player-container, where the rounded corners
+       belong to the container and the video sits inside it unclipped — so it starts off square.
+       Round the video itself until the real slot takes over. */
+    ytd-shorts #initial-player-container video,
+    ytd-shorts #initial-player-container .html5-video-player {
+      border-radius: 12px;
+      overflow: hidden;
+    }
     /* The player stacks Shorts in slots, so the next one peeks in at the bottom. Show one slot only.
        Until the script has picked one, that's slot 0 — the Short the player starts on. */
     ytd-shorts #shorts-inner-container:not([data-ytu-picked]) > .reel-video-in-sequence-new:not([id="0"]),
