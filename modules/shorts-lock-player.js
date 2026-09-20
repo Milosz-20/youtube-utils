@@ -126,6 +126,9 @@ YTU.register({
       const t = e.target;
       // Comments / description panels keep scrolling normally.
       if (t.closest && t.closest('#shorts-panel-container, ytd-engagement-panel-section-list-renderer')) return;
+      // Only vertical scrolling moves to the next Short. Sideways is the touchpad's back gesture,
+      // which is the way out of a Short — blocking it traps you on the page.
+      if (e.type === 'wheel' && Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
     }

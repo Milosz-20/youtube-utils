@@ -32,6 +32,8 @@ YTU.register({
       hide.push(
         `${NOT_FEED} ytm-shorts-lockup-view-model:not([data-ssf-ok])`,
         `${NOT_FEED} ytm-shorts-lockup-view-model-v2:not([data-ssf-ok])`,
+        // A shelf whose cards are still being checked: see updateShelves().
+        `${NOT_FEED} [data-ssf-pending]`,
       );
     }
     if (s.hideShortsTab) {
@@ -301,21 +303,35 @@ YTU.register({
     }
 
     // Hides a Shorts shelf once none of its cards are left visible.
+    // Cards resolve one at a time — the ones without a channel link need a lookup — so a shelf would
+    // visibly grow card by card. Hold it back until they're all done; SETTLE_MS caps the wait so one
+    // stuck lookup can't hide a shelf for good.
+    const SETTLE_MS = 4000;
+    let settleTimer = null;
+
     function updateShelves() {
+      let waiting = false;
       for (const shelf of document.querySelectorAll(SHELF_SEL)) {
         const cards = [...shelf.querySelectorAll('a[href^="/shorts/"]')].map(cardOf).filter(Boolean);
         if (!cards.length) continue;
         shelf.toggleAttribute('data-ssf-hidden', cards.every(c => c.hasAttribute('data-ssf-hidden')));
+        if (!shelf.dataset.ssfSince) shelf.dataset.ssfSince = String(Date.now());
+        const pending = cards.some(c => !c.dataset.ssfDone) && Date.now() - Number(shelf.dataset.ssfSince) < SETTLE_MS;
+        shelf.toggleAttribute('data-ssf-pending', pending);
+        waiting = waiting || pending;
       }
+      if (waiting && !settleTimer) settleTimer = setTimeout(() => { settleTimer = null; updateShelves(); }, 250);
     }
 
     // Removes every mark this module put on the page.
     function resetCards() {
-      for (const el of document.querySelectorAll('[data-ssf-hidden], [data-ssf-ok], [data-ssf-id]')) {
+      for (const el of document.querySelectorAll('[data-ssf-hidden], [data-ssf-ok], [data-ssf-id], [data-ssf-pending]')) {
         el.removeAttribute('data-ssf-hidden');
         el.removeAttribute('data-ssf-ok');
+        el.removeAttribute('data-ssf-pending');
         delete el.dataset.ssfId;
         delete el.dataset.ssfDone;
+        delete el.dataset.ssfSince;
       }
     }
 
@@ -375,6 +391,7 @@ YTU.register({
     return () => {
       stopped = true;
       clearTimeout(filterTimer);
+      clearTimeout(settleTimer);
       for (const d of disposers) d();
       resetCards();
       document.documentElement.removeAttribute(NOSUBS);
