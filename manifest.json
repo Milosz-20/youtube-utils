@@ -47,9 +47,9 @@
         "modules/shorts-subs-only.js",
         "modules/shorts-lock-player.js",
         "modules/playback-speed.js",
-        "modules/block-shortcuts-help.js",
         "modules/default-quality.js",
         "modules/sponsorblock.js",
+        "modules/block-shortcuts-help.js",
         "core/boot.js"
       ],
       "run_at": "document_start",
