@@ -71,6 +71,26 @@ AMO refuses a version number it has already seen, so always bump.
 
 Add `popup: true` to a setting to also show it in the toolbar popup.
 
+### Avoiding a flash of unstyled YouTube
+
+Settings live in the extension's async storage, so a module starts a beat after the page does — long enough
+for YouTube to paint the thing you are hiding. If your module hides or restyles anything, put those rules in
+a `css` property on the definition, as a string or a function of the settings:
+
+```js
+YTU.register({
+  id: 'my-feature',
+  css: s => (s.hideThing ? '.thing { display: none !important; }' : ''),
+  run(ctx) {
+    const def = this; // boot.js calls def.run(ctx)
+    style.textContent = def.css(ctx.settings); // re-render it yourself on change
+  },
+});
+```
+
+`core/boot.js` injects it at `document_start` using the settings it cached in `localStorage` last time, then
+drops that copy once the real settings arrive and your module has added its own stylesheet.
+
 The options page reads the module list from `manifest.json`, so the new card and its settings appear automatically.
 
 Modules run in YouTube's own page context (like a `@grant none` userscript): they can call YouTube's player API (`#movie_player`) and `fetch` YouTube endpoints with your session. Don't use `innerHTML` in modules — YouTube enforces Trusted Types and it throws; build elements with `createElement`. Always return a cleanup function so the module can be switched off without reloading the page.

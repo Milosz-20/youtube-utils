@@ -14,6 +14,28 @@
     return out;
   }
 
+  // Settings come from the extension's async storage, so the first ones land after YouTube has
+  // already painted. A module can declare `css` (a string, or a function of its settings), which
+  // goes in here at document_start using the settings we saw last time — nothing flashes before it.
+  const CACHE = 'ytu:last-settings';
+  let earlyStyle = null;
+
+  function applyEarlyCss() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(CACHE)) || {}; } catch { /* first run */ }
+    const css = YTU.modules.map(def => {
+      if (!def.css) return '';
+      const cfg = { ...defaultsOf(def), ...((saved.modules || {})[def.id] || {}) };
+      if (!cfg.enabled) return '';
+      return typeof def.css === 'function' ? def.css(cfg) : def.css;
+    }).filter(Boolean).join('\n');
+    if (!css) return;
+    earlyStyle = document.createElement('style');
+    earlyStyle.id = 'ytu-early-css';
+    earlyStyle.textContent = css;
+    (document.head || document.documentElement).appendChild(earlyStyle);
+  }
+
   function makeStorage(id) {
     const prefix = `ytu:${id}:`;
     return {
@@ -83,9 +105,13 @@
   }
 
   document.addEventListener('ytu:settings', e => {
+    try { localStorage.setItem(CACHE, e.detail || '{}'); } catch { /* storage full/blocked */ }
     let saved = {};
     try { saved = JSON.parse(e.detail || '{}'); } catch { /* keep defaults */ }
     apply(saved);
+    // Every running module brought its own stylesheet, so the early copy can go.
+    if (earlyStyle) { earlyStyle.remove(); earlyStyle = null; }
   });
+  applyEarlyCss();
   document.dispatchEvent(new CustomEvent('ytu:hello'));
 })();

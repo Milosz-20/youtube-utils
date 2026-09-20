@@ -4,25 +4,34 @@ YTU.register({
   name: 'One Short at a time',
   description: 'Opening a Short plays only that one. Scrolling, swiping, the arrow keys and auto-advance can\'t move to the next Short, and no neighbouring Short peeks in at the bottom of the screen.',
 
+  // boot.js puts this in at document_start, before YouTube has drawn anything.
+  css: `
+    ytd-shorts .navigation-container,
+    ytd-shorts #navigation-button-up,
+    ytd-shorts #navigation-button-down { display: none !important; }
+    ytd-shorts #shorts-inner-container {
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      touch-action: none !important;
+    }
+    /* The player stacks Shorts in slots, so the next one peeks in at the bottom. Show one slot only.
+       Until the script has picked one, that's slot 0 — the Short the player starts on. */
+    ytd-shorts #shorts-inner-container:not([data-ytu-picked]) > .reel-video-in-sequence-new:not([id="0"]),
+    ytd-shorts #shorts-inner-container[data-ytu-picked] > .reel-video-in-sequence-new:not([data-ytu-current]) {
+      visibility: hidden !important;
+    }`,
+
   run(ctx) {
+    const def = this; // boot.js calls def.run(ctx), so `this` is this definition
     const disposers = [];
     const on = (target, type, fn, opts) => {
       target.addEventListener(type, fn, opts);
       disposers.push(() => target.removeEventListener(type, fn, opts));
     };
 
-    // -------------------------------------------------------------- CSS
     const style = document.createElement('style');
     style.id = 'ytu-shorts-lock-style';
-    style.textContent = `
-      ytd-shorts .navigation-container,
-      ytd-shorts #navigation-button-up,
-      ytd-shorts #navigation-button-down { display: none !important; }
-      ytd-shorts #shorts-inner-container {
-        overflow: hidden !important;
-        overscroll-behavior: none !important;
-        touch-action: none !important;
-      }`;
+    style.textContent = def.css;
     (document.head || document.documentElement).appendChild(style);
     disposers.push(() => style.remove());
 
@@ -41,15 +50,22 @@ YTU.register({
       }
     }
 
-    // The player stacks Shorts in slots, so the next one peeks in at the bottom.
-    // Hide every slot except the one centred on screen.
-    function slots() {
-      const box = document.querySelector('ytd-shorts #shorts-inner-container');
-      return box ? [...box.children].filter(k => k.classList.contains('reel-video-in-sequence-new') || /^\d+$/.test(k.id)) : [];
-    }
+    // -------------------------------------------------------------- one visible slot
+    const container = () => document.querySelector('ytd-shorts #shorts-inner-container');
+    const slotsOf = box => (box ? [...box.children].filter(k => k.classList.contains('reel-video-in-sequence-new')) : []);
 
-    function hideNeighbours() {
-      const all = slots();
+    // Marks the slot centred on screen; the stylesheet hides every other one.
+    function pickCurrent() {
+      const box = container();
+      if (!box) return;
+      const all = slotsOf(box);
+      // Fast path: the slot we already marked is still the one on screen. One rect instead of ~30,
+      // which matters because this runs on every frame the player mutates something.
+      const marked = box.querySelector('.reel-video-in-sequence-new[data-ytu-current]');
+      if (marked && marked.parentElement === box) {
+        const m = marked.getBoundingClientRect();
+        if (m.height && Math.abs((m.top + m.bottom) / 2 - innerHeight / 2) < m.height / 2) return;
+      }
       const mid = innerHeight / 2;
       let current = null, best = Infinity;
       for (const el of all) {
@@ -58,15 +74,41 @@ YTU.register({
         const d = Math.abs((r.top + r.bottom) / 2 - mid);
         if (d < best) { best = d; current = el; }
       }
-      for (const el of all) {
-        const v = el === current ? '' : 'hidden';
-        if (el.style.visibility !== v) el.style.visibility = v;
+      for (const el of all) el.toggleAttribute('data-ytu-current', el === current);
+      // With nothing picked the stylesheet falls back to slot 0 instead of hiding the lot.
+      box.toggleAttribute('data-ytu-picked', !!current);
+    }
+
+    function clearMarks() {
+      const box = container();
+      if (box) box.removeAttribute('data-ytu-picked');
+      for (const el of slotsOf(box)) {
+        el.removeAttribute('data-ytu-current');
+        el.style.visibility = ''; // left over from older versions
       }
     }
 
-    function showNeighbours() {
-      for (const el of slots()) el.style.visibility = '';
+    // The slots are built and moved around while the player boots. Re-pick in the same frame,
+    // before the browser paints, so a neighbouring Short is never visible.
+    let frame = 0;
+    function schedulePick() {
+      if (frame || !shortIdFromUrl()) return;
+      frame = requestAnimationFrame(() => { frame = 0; pickCurrent(); });
     }
+
+    let observing = false;
+    const observer = new MutationObserver(schedulePick);
+    function syncObserver() {
+      const onShort = !!shortIdFromUrl();
+      if (onShort === observing) return;
+      observing = onShort;
+      if (onShort) observer.observe(document.documentElement, { childList: true, subtree: true });
+      else { observer.disconnect(); clearMarks(); }
+    }
+    disposers.push(() => observer.disconnect());
+
+    on(window, 'scroll', schedulePick, true);
+    on(window, 'resize', schedulePick);
 
     // -------------------------------------------------------------- input blocking
     const inTextField = t => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
@@ -95,7 +137,8 @@ YTU.register({
     // -------------------------------------------------------------- navigation loop
     let lastHref = null;
     function tick() {
-      if (shortIdFromUrl()) hideNeighbours();
+      syncObserver();
+      schedulePick();
       if (location.href === lastHref) return;
       lastHref = location.href;
       updateLock();
@@ -107,8 +150,9 @@ YTU.register({
     tick();
 
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       for (const d of disposers) d();
-      showNeighbours();
+      clearMarks();
     };
   },
 });

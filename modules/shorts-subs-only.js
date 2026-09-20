@@ -20,7 +20,39 @@ YTU.register({
     refreshSubs: { type: 'action', label: 'Refresh subscription list now' },
   },
 
+  // Also used by boot.js at document_start, from the settings it saw last time.
+  css(s) {
+    const NOT_FEED = 'html:not([data-ssf-feed])';
+    const hide = ['[data-ssf-hidden]'];
+    if (s.filterFeeds) {
+      // Cards stay hidden until verified, so random Shorts never flash on screen.
+      hide.push(
+        `${NOT_FEED} ytm-shorts-lockup-view-model:not([data-ssf-ok])`,
+        `${NOT_FEED} ytm-shorts-lockup-view-model-v2:not([data-ssf-ok])`,
+      );
+    }
+    if (s.hideShortsTab) {
+      hide.push('ytd-guide-entry-renderer:has(a[title="Shorts"])', 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]');
+    }
+    if (s.mode === 'off') {
+      // Everywhere, including the Subscriptions feed and channel pages.
+      hide.push(
+        'ytm-shorts-lockup-view-model',
+        'ytm-shorts-lockup-view-model-v2',
+        'ytd-reel-shelf-renderer',
+        'ytd-rich-shelf-renderer[is-shorts]',
+        'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
+        'grid-shelf-view-model:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2)',
+        'ytd-guide-entry-renderer:has(a[title="Shorts"])',
+        'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
+        'yt-tab-shape[tab-title="Shorts"]',
+      );
+    }
+    return `${hide.join(',\n')} { display: none !important; }`;
+  },
+
   run(ctx) {
+    const def = this; // boot.js calls def.run(ctx), so `this` is this definition
     const s = ctx.settings;
     const disposers = [];
     const on = (target, type, fn, opts) => {
@@ -36,35 +68,7 @@ YTU.register({
     (document.head || document.documentElement).appendChild(style);
     disposers.push(() => style.remove());
 
-    function renderCss() {
-      const NOT_FEED = 'html:not([data-ssf-feed])';
-      const hide = ['[data-ssf-hidden]'];
-      if (s.filterFeeds) {
-        // Cards stay hidden until verified, so random Shorts never flash on screen.
-        hide.push(
-          `${NOT_FEED} ytm-shorts-lockup-view-model:not([data-ssf-ok])`,
-          `${NOT_FEED} ytm-shorts-lockup-view-model-v2:not([data-ssf-ok])`,
-        );
-      }
-      if (s.hideShortsTab) {
-        hide.push('ytd-guide-entry-renderer:has(a[title="Shorts"])', 'ytd-mini-guide-entry-renderer[aria-label="Shorts"]');
-      }
-      if (s.mode === 'off') {
-        // Everywhere, including the Subscriptions feed and channel pages.
-        hide.push(
-          'ytm-shorts-lockup-view-model',
-          'ytm-shorts-lockup-view-model-v2',
-          'ytd-reel-shelf-renderer',
-          'ytd-rich-shelf-renderer[is-shorts]',
-          'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
-          'grid-shelf-view-model:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2)',
-          'ytd-guide-entry-renderer:has(a[title="Shorts"])',
-          'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
-          'yt-tab-shape[tab-title="Shorts"]',
-        );
-      }
-      style.textContent = `${hide.join(',\n')} { display: none !important; }`;
-    }
+    function renderCss() { style.textContent = def.css(s); }
 
     // -------------------------------------------------------------- helpers
     // Normalises a channel URL/path to "/@handle" or "/channel/uc..." etc.

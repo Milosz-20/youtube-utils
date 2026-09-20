@@ -12,6 +12,7 @@
      * @param {string} def.description
      * @param {boolean} [def.enabledByDefault=true]
      * @param {Object<string, object>} [def.settings]  see README for setting types
+     * @param {string | ((settings) => string)} [def.css]  stylesheet; boot.js injects it at document_start
      * @param {(ctx) => (void | (() => void))} def.run  start the feature; return a cleanup function
      */
     register(def) {
