@@ -34,6 +34,9 @@
     earlyStyle.id = 'ytu-early-css';
     earlyStyle.textContent = css;
     (document.head || document.documentElement).appendChild(earlyStyle);
+    // If the settings never arrive — a broken bridge, half-reloaded extension — drop it rather than
+    // leave the page hiding things with no module running to put them back.
+    setTimeout(() => { if (earlyStyle) { earlyStyle.remove(); earlyStyle = null; } }, 5000);
   }
 
   function makeStorage(id) {

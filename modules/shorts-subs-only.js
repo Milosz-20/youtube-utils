@@ -22,7 +22,10 @@ YTU.register({
 
   // Also used by boot.js at document_start, from the settings it saw last time.
   css(s) {
-    const NOT_FEED = 'html:not([data-ssf-feed])';
+    // Not on the pages you open on purpose, and not when the subscription list failed to load
+    // ("data-ssf-nosubs") — without it we can't tell a subscribed Short from any other, and
+    // hiding every Short is worse than showing them.
+    const NOT_FEED = 'html:not([data-ssf-feed]):not([data-ssf-nosubs])';
     const hide = ['[data-ssf-hidden]'];
     if (s.filterFeeds) {
       // Cards stay hidden until verified, so random Shorts never flash on screen.
@@ -189,15 +192,25 @@ YTU.register({
       }
       if (!fetching) {
         fetching = fetchSubs()
-          .then(r => (subs = r))
+          .then(r => { subsFailed(false); return (subs = r); })
           .catch(err => {
             // Stale list is better than nothing.
-            if (cached && cached.keys) return (subs = toRuntime(cached));
+            if (cached && cached.keys) { subsFailed(false); return (subs = toRuntime(cached)); }
+            subsFailed(true, err);
             throw err;
           })
           .finally(() => { fetching = null; scheduleFilter(); });
       }
       return fetching;
+    }
+
+    const NOSUBS = 'data-ssf-nosubs';
+    function subsFailed(failed, err) {
+      if (document.documentElement.hasAttribute(NOSUBS) === failed) return;
+      document.documentElement.toggleAttribute(NOSUBS, failed);
+      if (failed) ctx.log('showing Shorts unfiltered: ' + (err ? err.message : 'no subscription list'));
+      resetCards();
+      scheduleFilter();
     }
 
     const isSubscribed = (owner, list) =>
@@ -264,7 +277,8 @@ YTU.register({
         delete item.dataset.ssfDone;
 
         if (off) { setItemState(item, lockup, false); item.dataset.ssfDone = '1'; continue; }
-        if (!subs) { setItemState(item, lockup, false); continue; } // wait for subscription list
+        // Hide until verified, unless the list failed to load — then nothing is going to verify them.
+        if (!subs) { if (!document.documentElement.hasAttribute(NOSUBS)) setItemState(item, lockup, false); continue; }
 
         const ch = item.querySelector('a[href^="/@"], a[href^="/channel/"]');
         if (ch) {
@@ -363,6 +377,7 @@ YTU.register({
       clearTimeout(filterTimer);
       for (const d of disposers) d();
       resetCards();
+      document.documentElement.removeAttribute(NOSUBS);
       document.documentElement.removeAttribute('data-ssf-feed');
     };
   },
