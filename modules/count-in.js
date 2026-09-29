@@ -31,7 +31,19 @@ YTU.register({
       }
       .ytp-big-mode .ytu-ci-panel { bottom: 84px; }
       .ytu-ci-panel[hidden] { display: none; }
-      .ytu-ci-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+      .ytu-ci-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+      .ytu-ci-head .ytu-ci-x { margin-left: auto; }
+      .ytu-ci-switch { position: relative; width: 34px; height: 18px; flex: none; cursor: pointer; }
+      .ytu-ci-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+      .ytu-ci-switch span { position: absolute; inset: 0; border-radius: 9px; background: rgba(255, 255, 255, .25); transition: background .15s; pointer-events: none; }
+      .ytu-ci-switch span::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+      .ytu-ci-switch input:checked + span { background: #3ea6ff; }
+      .ytu-ci-switch input:checked + span::after { transform: translateX(16px); }
+      .ytu-ci-switch input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+      .ytu-ci-off-note { display: none; color: rgba(255, 255, 255, .6); font-size: 12px; }
+      .ytu-ci-panel.ytu-ci-off .ytu-ci-body { display: none; }
+      .ytu-ci-panel.ytu-ci-off .ytu-ci-off-note { display: block; }
+      .ytu-ci-btn.ytu-ci-disabled svg { opacity: .45; }
       .ytu-ci-row { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
       .ytu-ci-label { flex: none; width: 46px; color: rgba(255, 255, 255, .7); }
       .ytu-ci-val { min-width: 62px; font-variant-numeric: tabular-nums; }
@@ -92,6 +104,8 @@ YTU.register({
     let song = {};
     const beatsOf = () => song.beats || s.beats;
     const perBarOf = () => song.perBar || s.perBar;
+    // Off unless you switch it on for this video; videos you've already set a tempo for count as on.
+    const isOn = () => (song.enabled != null ? song.enabled : !!song.bpm);
     function save() {
       if (videoId) ctx.storage.set('song:' + videoId, song);
       refresh();
@@ -132,7 +146,7 @@ YTU.register({
 
     function tap() {
       const v = video();
-      if (!v || isAd()) return;
+      if (!v || isAd() || !isOn()) return;
       openPanel();
       if (v.paused) {
         note = 'Play the song first, then tap R on every beat.';
@@ -231,7 +245,7 @@ YTU.register({
     async function countIn(fromHere) {
       if (counting) { abort(); return; } // pressing it again cancels
       const v = video();
-      if (!isWatch() || !v || isAd()) return;
+      if (!isWatch() || !v || isAd() || !isOn()) return;
       if (!song.bpm) {
         openPanel();
         note = 'Set the tempo first: play the song and tap R on every beat.';
@@ -402,7 +416,20 @@ YTU.register({
       }
 
       const head = el('div', 'ytu-ci-head');
-      head.append(el('span', '', 'Count-in'), btnEl('×', 'Close', closePanel, 'ytu-ci-x'));
+      const sw = el('label', 'ytu-ci-switch');
+      sw.title = 'Count-in for this video';
+      ui.on = el('input');
+      ui.on.type = 'checkbox';
+      ui.on.setAttribute('aria-label', 'Count-in for this video');
+      ui.on.addEventListener('change', () => {
+        song.enabled = ui.on.checked;
+        if (!song.enabled) { abort(); taps = []; }
+        save();
+      });
+      sw.append(ui.on, el('span'));
+      head.append(el('span', '', 'Count-in'), sw, btnEl('×', 'Close', closePanel, 'ytu-ci-x'));
+      const offNote = el('div', 'ytu-ci-off-note', 'Off for this video: R and G do nothing here. Switch it on to use the count-in.');
+      const body = el('div', 'ytu-ci-body');
 
       ui.bpm = el('input');
       Object.assign(ui.bpm, { type: 'number', min: '30', max: '300', step: '0.1', placeholder: '—' });
@@ -444,8 +471,7 @@ YTU.register({
       const tapRow = el('div', 'ytu-ci-row');
       tapRow.append(el('span', 'ytu-ci-label'), ui.tap, ui.note);
 
-      p.append(
-        head,
+      body.append(
         row('Tempo', ui.bpm, el('span', 'ytu-ci-unit', 'BPM'),
           btnEl('½', 'Half the tempo', () => setBpm(song.bpm / 2)),
           btnEl('×2', 'Double the tempo', () => setBpm(song.bpm * 2))),
@@ -460,15 +486,20 @@ YTU.register({
         row('Clicks', ui.beats, el('span', 'ytu-ci-unit', 'in bars of'), ui.perBar),
         actions,
       );
+      p.append(head, offNote, body);
       return p;
     }
 
     function refresh() {
+      const onHere = isOn();
       if (btn) {
-        btn.classList.toggle('ytu-ci-set', !!song.bpm);
-        btn.title = song.bpm ? `Count-in · ${fmtBpm(song.bpm)} BPM (G)` : 'Count-in (G)';
+        btn.classList.toggle('ytu-ci-set', onHere && !!song.bpm);
+        btn.classList.toggle('ytu-ci-disabled', !onHere);
+        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in · ${fmtBpm(song.bpm)} BPM (G)` : 'Count-in (G)';
       }
       if (!panel) return;
+      ui.on.checked = onHere;
+      panel.classList.toggle('ytu-ci-off', !onHere);
       if (document.activeElement !== ui.bpm) ui.bpm.value = song.bpm ? fmtBpm(song.bpm) : '';
       if (document.activeElement !== ui.beats) ui.beats.value = String(beatsOf());
       if (document.activeElement !== ui.perBar) ui.perBar.value = String(perBarOf());
@@ -514,8 +545,8 @@ YTU.register({
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
       const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || (k === 'r' && !e.shiftKey));
-      if (inPanel && !ours) { e.stopImmediatePropagation(); return; }
-      if (!ours || !isWatch() || (!inPanel && inTextField(e.target))) return;
+      if (inPanel && !(ours && isOn())) { e.stopImmediatePropagation(); return; }
+      if (!ours || !isWatch() || !isOn() || (!inPanel && inTextField(e.target))) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
