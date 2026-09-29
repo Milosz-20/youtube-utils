@@ -96,8 +96,8 @@ YTU.register({
       .ytu-ci-stepper span { min-width: 22px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; }
       .ytu-ci-unit { min-width: 42px; color: rgba(255, 255, 255, .5); font-size: 12px; }
 
-      .ytu-ci-sounds { display: flex; gap: 4px; }
-      .ytu-ci-panel .ytu-ci-sounds button { flex: 1; height: 26px; padding: 0 4px; font-size: 11.5px; }
+      .ytu-ci-sounds { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+      .ytu-ci-panel .ytu-ci-sounds button { height: 26px; padding: 0 4px; font-size: 11.5px; }
       .ytu-ci-panel .ytu-ci-sounds button[aria-pressed="true"] { background: #f1f1f1; color: #0f0f0f; }
 
       .ytu-ci-actions { display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
@@ -270,7 +270,39 @@ YTU.register({
       nodes.push(osc);
     }
 
+    // Drum voices, shared by the sounds below.
+    const kick = (when, vol, nodes) => {
+      tone(when, 'sine', 150, vol, 0.22, nodes, 42);            // the boom: a pitch sweeping down
+      noiseHit(when, 'lowpass', 3000, 0.7, vol * 0.35, 0.006, nodes); // the beater
+    };
+    const snare = (when, vol, nodes) => {
+      noiseHit(when, 'highpass', 1500, 0.7, vol * 0.9, 0.16, nodes);  // the wires
+      tone(when, 'triangle', 190, vol * 0.6, 0.08, nodes, 160);        // the shell
+    };
+    const tom = (when, high, vol, nodes) => {
+      tone(when, 'sine', high ? 230 : 170, vol, 0.32, nodes, high ? 150 : 110);
+      noiseHit(when, 'bandpass', 1200, 1, vol * 0.15, 0.02, nodes);
+    };
+
     const SOUNDS = {
+      // Kick on every bar's "1", snare on the rest: how a drummer's count feels.
+      kit: {
+        label: 'Kit',
+        play(when, accent, vol, nodes) { if (accent) kick(when, vol, nodes); else snare(when, vol * 0.85, nodes); },
+      },
+      kick: {
+        label: 'Kick',
+        play(when, accent, vol, nodes) { kick(when, vol, nodes); },
+      },
+      snare: {
+        label: 'Snare',
+        play(when, accent, vol, nodes) { snare(when, vol, nodes); },
+      },
+      // A higher tom for the "1", a lower one for the rest.
+      tom: {
+        label: 'Toms',
+        play(when, accent, vol, nodes) { tom(when, accent, vol, nodes); },
+      },
       // Two drumsticks knocked together: a bright, woody tick.
       sticks: {
         label: 'Sticks',
@@ -322,8 +354,8 @@ YTU.register({
     };
     // Your pick, shared by every video. Kept here rather than in the options page, since you choose
     // it while listening, from the panel.
-    let soundId = ctx.storage.get('sound', 'sticks');
-    if (!SOUNDS[soundId]) soundId = 'sticks';
+    let soundId = ctx.storage.get('sound', 'kit');
+    if (!SOUNDS[soundId]) soundId = 'kit';
 
     function click(when, accent, nodes) {
       const vol = (s.volume / 100) * (accent ? 1 : 0.6);
