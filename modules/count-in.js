@@ -22,50 +22,89 @@ YTU.register({
     style.textContent = `
       .ytu-ci-btn svg { display: block; margin: auto; }
       .ytu-ci-btn.ytu-ci-set .ytu-ci-weight { fill: #3ea6ff; }
+      .ytu-ci-btn.ytu-ci-disabled svg { opacity: .45; }
       .ytu-ci-panel {
-        position: absolute; right: 12px; bottom: 62px; z-index: 2301; width: 292px;
-        padding: 12px 14px; border-radius: 12px; box-sizing: border-box;
-        background: rgba(20, 20, 20, .9); backdrop-filter: blur(16px);
-        box-shadow: 0 4px 24px rgba(0, 0, 0, .4);
-        color: #fff; font: 400 13px/1.3 Roboto, Arial, sans-serif; text-align: left;
+        position: absolute; right: 12px; bottom: 62px; z-index: 2301; width: 304px; box-sizing: border-box;
+        border-radius: 16px; overflow: hidden auto; max-height: calc(100% - 74px);
+        background: rgba(30, 30, 30, .9); backdrop-filter: blur(20px) saturate(1.2);
+        border: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
+        color: #f1f1f1; font: 400 13px/1.35 Roboto, Arial, sans-serif; text-align: left;
       }
       .ytp-big-mode .ytu-ci-panel { bottom: 84px; }
       .ytu-ci-panel[hidden] { display: none; }
-      .ytu-ci-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
-      .ytu-ci-head .ytu-ci-x { margin-left: auto; }
-      .ytu-ci-switch { position: relative; width: 34px; height: 18px; flex: none; cursor: pointer; }
-      .ytu-ci-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-      .ytu-ci-switch span { position: absolute; inset: 0; border-radius: 9px; background: rgba(255, 255, 255, .25); transition: background .15s; pointer-events: none; }
-      .ytu-ci-switch span::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+      .ytu-ci-panel * { box-sizing: border-box; }
+      .ytu-ci-panel button {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        height: 28px; padding: 0 10px; border: none; border-radius: 14px;
+        background: rgba(255, 255, 255, .1); color: #f1f1f1; font: 500 12px/1 Roboto, Arial, sans-serif;
+        cursor: pointer; transition: background .12s;
+      }
+      .ytu-ci-panel button:hover { background: rgba(255, 255, 255, .18); }
+      .ytu-ci-panel button:focus-visible, .ytu-ci-panel input:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 1px; }
+      .ytu-ci-key {
+        padding: 2px 5px; border-radius: 4px; font: 500 10px/1 Roboto, Arial, sans-serif;
+        background: rgba(255, 255, 255, .14); color: rgba(255, 255, 255, .75);
+      }
+
+      .ytu-ci-head { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 16px; }
+      .ytu-ci-title { font-size: 15px; font-weight: 500; margin-right: auto; }
+      .ytu-ci-panel button.ytu-ci-x { width: 28px; padding: 0; background: none; font-size: 18px; color: rgba(255, 255, 255, .6); }
+      .ytu-ci-panel button.ytu-ci-x:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+      .ytu-ci-switch { position: relative; width: 36px; height: 20px; flex: none; cursor: pointer; }
+      .ytu-ci-switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+      .ytu-ci-switch span { position: absolute; inset: 0; border-radius: 10px; background: rgba(255, 255, 255, .22); transition: background .15s; pointer-events: none; }
+      .ytu-ci-switch span::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
       .ytu-ci-switch input:checked + span { background: #3ea6ff; }
       .ytu-ci-switch input:checked + span::after { transform: translateX(16px); }
       .ytu-ci-switch input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
-      .ytu-ci-off-note { display: none; color: rgba(255, 255, 255, .6); font-size: 12px; }
+
+      .ytu-ci-off-note { display: none; padding: 0 16px 16px; color: rgba(255, 255, 255, .6); font-size: 12px; }
       .ytu-ci-panel.ytu-ci-off .ytu-ci-body { display: none; }
       .ytu-ci-panel.ytu-ci-off .ytu-ci-off-note { display: block; }
-      .ytu-ci-btn.ytu-ci-disabled svg { opacity: .45; }
-      .ytu-ci-row { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
-      .ytu-ci-label { flex: none; width: 46px; color: rgba(255, 255, 255, .7); }
-      .ytu-ci-val { min-width: 62px; font-variant-numeric: tabular-nums; }
-      .ytu-ci-unit { color: rgba(255, 255, 255, .7); margin-right: auto; }
-      .ytu-ci-panel button {
-        border: none; border-radius: 14px; padding: 4px 9px;
-        background: rgba(255, 255, 255, .12); color: #fff; font: inherit; cursor: pointer;
+
+      .ytu-ci-section { padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, .08); }
+      .ytu-ci-caption { display: flex; align-items: center; gap: 4px; margin-bottom: 4px;
+        font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
+      .ytu-ci-caption > span { margin-right: auto; }
+      .ytu-ci-panel .ytu-ci-caption button { height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11px; letter-spacing: 0; text-transform: none; }
+
+      .ytu-ci-tempo { display: flex; align-items: center; justify-content: space-between; }
+      .ytu-ci-panel button.ytu-ci-round { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; font-weight: 400; }
+      .ytu-ci-bpmbox { display: flex; flex-direction: column; align-items: center; }
+      .ytu-ci-panel input.ytu-ci-bpm {
+        width: 120px; padding: 0; border: none; border-radius: 8px; background: none; color: #fff; text-align: center;
+        font: 500 32px/1.1 Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums;
       }
-      .ytu-ci-panel button:hover { background: rgba(255, 255, 255, .22); }
-      .ytu-ci-panel button.ytu-ci-primary { background: #fff; color: #0f0f0f; font-weight: 500; }
-      .ytu-ci-panel button.ytu-ci-primary:hover { background: #d9d9d9; }
-      .ytu-ci-panel button.ytu-ci-x { background: none; padding: 0 4px; font-size: 18px; line-height: 1; color: rgba(255, 255, 255, .7); }
-      .ytu-ci-panel button.ytu-ci-flash { background: rgba(62, 166, 255, .6); }
-      .ytu-ci-panel input {
-        width: 58px; padding: 4px 6px; border: none; border-radius: 6px;
-        background: rgba(255, 255, 255, .1); color: #fff; font: inherit;
-      }
-      .ytu-ci-key { opacity: .6; margin-left: 4px; }
-      .ytu-ci-hint { flex: 1; color: rgba(255, 255, 255, .6); font-size: 12px; line-height: 1.25; }
-      .ytu-ci-panel button.ytu-ci-tap { flex: none; }
-      .ytu-ci-actions { display: flex; gap: 6px; margin-top: 10px; }
-      .ytu-ci-actions button { flex: 1; padding: 7px 9px; }
+      .ytu-ci-panel input.ytu-ci-bpm:hover { background: rgba(255, 255, 255, .06); }
+      .ytu-ci-panel input.ytu-ci-bpm::placeholder { color: rgba(255, 255, 255, .3); }
+      .ytu-ci-bpmunit { font-size: 11px; color: rgba(255, 255, 255, .5); letter-spacing: .06em; }
+      .ytu-ci-panel button.ytu-ci-tap { width: 100%; height: 34px; margin-top: 8px; border-radius: 17px; font-size: 13px; }
+      .ytu-ci-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .35); transition: background .08s, transform .08s; }
+      .ytu-ci-panel button.ytu-ci-flash { background: rgba(62, 166, 255, .28); }
+      .ytu-ci-flash .ytu-ci-dot { background: #3ea6ff; transform: scale(1.5); }
+      .ytu-ci-hint { margin-top: 6px; text-align: center; font-size: 12px; color: rgba(255, 255, 255, .55); }
+      .ytu-ci-hint:empty { display: none; }
+
+      .ytu-ci-row { display: flex; align-items: center; gap: 6px; min-height: 30px; }
+      .ytu-ci-row + .ytu-ci-row { margin-top: 2px; }
+      .ytu-ci-label { margin-right: auto; color: rgba(255, 255, 255, .7); }
+      .ytu-ci-val { margin-right: 2px; font-variant-numeric: tabular-nums; }
+      .ytu-ci-panel button.ytu-ci-small { width: 28px; padding: 0; font-size: 14px; }
+      .ytu-ci-stepper { display: flex; align-items: center; height: 28px; border-radius: 14px; background: rgba(255, 255, 255, .1); }
+      .ytu-ci-panel .ytu-ci-stepper button { width: 28px; padding: 0; background: none; font-size: 16px; font-weight: 400; }
+      .ytu-ci-panel .ytu-ci-stepper button:hover { background: rgba(255, 255, 255, .12); }
+      .ytu-ci-stepper span { min-width: 22px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; }
+      .ytu-ci-unit { min-width: 42px; color: rgba(255, 255, 255, .5); font-size: 12px; }
+
+      .ytu-ci-sounds { display: flex; gap: 4px; }
+      .ytu-ci-panel .ytu-ci-sounds button { flex: 1; height: 26px; padding: 0 4px; font-size: 11.5px; }
+      .ytu-ci-panel .ytu-ci-sounds button[aria-pressed="true"] { background: #f1f1f1; color: #0f0f0f; }
+
+      .ytu-ci-actions { display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
+      .ytu-ci-panel .ytu-ci-actions button { flex: 1; height: 36px; border-radius: 18px; font-size: 13px; }
+      .ytu-ci-panel .ytu-ci-actions button.ytu-ci-primary { background: #f1f1f1; color: #0f0f0f; }
+      .ytu-ci-panel .ytu-ci-actions button.ytu-ci-primary:hover { background: #d9d9d9; }
+      .ytu-ci-primary .ytu-ci-key { background: rgba(0, 0, 0, .1); color: rgba(0, 0, 0, .6); }
       .ytu-ci-overlay {
         position: absolute; inset: 0; z-index: 59; pointer-events: none;
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -159,13 +198,13 @@ YTU.register({
       taps.push(v.currentTime);
       if (ui.tap) {
         ui.tap.classList.add('ytu-ci-flash');
-        setTimeout(() => ui.tap && ui.tap.classList.remove('ytu-ci-flash'), 90);
+        setTimeout(() => ui.tap && ui.tap.classList.remove('ytu-ci-flash'), 120);
       }
       const fit = fitBeats(taps);
       if (fit) {
         song.bpm = Math.round((60 / fit.period) * 100) / 100;
         song.start = fit.t0;
-        note = `${taps.length} taps, off by ±${Math.round(fit.jitter * 1000)} ms on average`;
+        note = `${taps.length} taps \u00b7 steady to \u00b1${Math.round(fit.jitter * 1000)} ms`;
         save();
       } else {
         note = taps.length < 4 ? `${taps.length} of 4 taps…` : 'Uneven taps — keep going';
@@ -185,20 +224,120 @@ YTU.register({
     }
     disposers.push(() => { if (ac) ac.close(); });
 
-    function click(when, accent, nodes) {
-      const vol = (s.volume / 100) * (accent ? 1 : 0.7);
-      if (vol <= 0) return;
+    // Drum sounds, synthesised on the spot, so there are no audio files to ship. The accent (every
+    // bar's "1") is louder and, where it suits the instrument, brighter or longer.
+    let noise = null;
+    function noiseBuffer() {
+      if (!noise) {
+        noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+        const d = noise.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      return noise;
+    }
+
+    // A gain envelope: near-silent, a 1–2 ms attack, then an exponential decay to silence.
+    function envelope(when, peak, decay, attack = 0.001) {
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), when + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + attack + decay);
+      g.connect(ac.destination);
+      return g;
+    }
+
+    function noiseHit(when, filter, freq, q, peak, decay, nodes) {
+      const src = ac.createBufferSource();
+      src.buffer = noiseBuffer();
+      const f = ac.createBiquadFilter();
+      f.type = filter;
+      f.frequency.value = freq;
+      f.Q.value = q;
+      src.connect(f).connect(envelope(when, peak, decay));
+      src.start(when);
+      src.stop(when + decay + 0.05);
+      nodes.push(src);
+    }
+
+    function tone(when, type, freq, peak, decay, nodes, endFreq) {
       const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = accent ? 1800 : 1200;
-      gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime(vol, when + 0.002);
-      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.07);
-      osc.connect(gain).connect(ac.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, when);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, when + decay);
+      osc.connect(envelope(when, peak, decay));
       osc.start(when);
-      osc.stop(when + 0.08);
+      osc.stop(when + decay + 0.05);
       nodes.push(osc);
+    }
+
+    const SOUNDS = {
+      // Two drumsticks knocked together: a bright, woody tick.
+      sticks: {
+        label: 'Sticks',
+        play(when, accent, vol, nodes) {
+          noiseHit(when, 'bandpass', accent ? 3200 : 2600, 2.5, vol * 1.6, 0.035, nodes);
+          tone(when, 'triangle', accent ? 2100 : 1750, vol * 0.5, 0.025, nodes);
+        },
+      },
+      // Closed hi-hat; the accent opens up a little.
+      hihat: {
+        label: 'Hi-hat',
+        play(when, accent, vol, nodes) {
+          noiseHit(when, 'highpass', 7000, 0.7, vol * 1.1, accent ? 0.16 : 0.05, nodes);
+        },
+      },
+      woodblock: {
+        label: 'Wood',
+        play(when, accent, vol, nodes) {
+          tone(when, 'sine', accent ? 1250 : 950, vol, 0.07, nodes, accent ? 1150 : 880);
+          noiseHit(when, 'bandpass', 2000, 1, vol * 0.4, 0.008, nodes);
+        },
+      },
+      // The classic 808-style cowbell: two detuned square waves through a band-pass.
+      cowbell: {
+        label: 'Cowbell',
+        play(when, accent, vol, nodes) {
+          const f = ac.createBiquadFilter();
+          f.type = 'bandpass';
+          f.frequency.value = 800;
+          f.Q.value = 1.2;
+          f.connect(envelope(when, vol * 0.9, accent ? 0.35 : 0.2));
+          for (const hz of [540, 800]) {
+            const osc = ac.createOscillator();
+            osc.type = 'square';
+            osc.frequency.value = accent ? hz * 1.06 : hz;
+            osc.connect(f);
+            osc.start(when);
+            osc.stop(when + 0.45);
+            nodes.push(osc);
+          }
+        },
+      },
+      beep: {
+        label: 'Beep',
+        play(when, accent, vol, nodes) {
+          tone(when, 'triangle', accent ? 1800 : 1200, vol, 0.07, nodes);
+        },
+      },
+    };
+    // Your pick, shared by every video. Kept here rather than in the options page, since you choose
+    // it while listening, from the panel.
+    let soundId = ctx.storage.get('sound', 'sticks');
+    if (!SOUNDS[soundId]) soundId = 'sticks';
+
+    function click(when, accent, nodes) {
+      const vol = (s.volume / 100) * (accent ? 1 : 0.6);
+      if (vol <= 0) return;
+      SOUNDS[soundId].play(when, accent, vol, nodes);
+    }
+
+    // Plays "1 2" in the chosen sound, so you can hear it while picking.
+    function preview() {
+      audio().then(() => {
+        const at0 = ac.currentTime + 0.05;
+        click(at0, true, []);
+        click(at0 + 0.35, false, []);
+      });
     }
 
     // -------------------------------------------------------------- count-in
@@ -410,11 +549,36 @@ YTU.register({
     function buildPanel() {
       const p = el('div', 'ytu-ci-panel');
       p.hidden = true;
-      // Keep the player from reading clicks and keys in here as play/pause, fullscreen or seeking.
-      for (const type of ['click', 'mousedown', 'mouseup', 'dblclick', 'keydown', 'keyup', 'wheel', 'contextmenu']) {
+      // Keep the player from reading clicks in here as play/pause or fullscreen toggles.
+      // (Keys are shielded in onKey: YouTube sees them before anything inside the player does.)
+      for (const type of ['click', 'mousedown', 'mouseup', 'dblclick', 'wheel', 'contextmenu']) {
         p.addEventListener(type, e => e.stopPropagation());
       }
+      const section = (caption, ...kids) => {
+        const sec = el('div', 'ytu-ci-section');
+        if (caption) sec.appendChild(caption);
+        sec.append(...kids);
+        return sec;
+      };
+      const caption = (text, ...kids) => {
+        const c = el('div', 'ytu-ci-caption');
+        c.append(el('span', '', text), ...kids);
+        return c;
+      };
+      const stepper = (label, get, set, min, max) => {
+        const box = el('div', 'ytu-ci-stepper');
+        box.setAttribute('role', 'group');
+        box.setAttribute('aria-label', label);
+        const val = el('span');
+        box.append(
+          btnEl('\u2212', 'Fewer', () => set(Math.max(min, get() - 1))),
+          val,
+          btnEl('+', 'More', () => set(Math.min(max, get() + 1))),
+        );
+        return { box, val };
+      };
 
+      // Header: title, on/off for this video, close.
       const head = el('div', 'ytu-ci-head');
       const sw = el('label', 'ytu-ci-switch');
       sw.title = 'Count-in for this video';
@@ -427,63 +591,80 @@ YTU.register({
         save();
       });
       sw.append(ui.on, el('span'));
-      head.append(el('span', '', 'Count-in'), sw, btnEl('×', 'Close', closePanel, 'ytu-ci-x'));
-      const offNote = el('div', 'ytu-ci-off-note', 'Off for this video: R and G do nothing here. Switch it on to use the count-in.');
-      const body = el('div', 'ytu-ci-body');
+      head.append(el('span', 'ytu-ci-title', 'Count-in'), sw, btnEl('\u00d7', 'Close', closePanel, 'ytu-ci-x'));
+      const offNote = el('div', 'ytu-ci-off-note', 'Off for this video, so R and G do nothing here. Switch it on to count in.');
 
-      ui.bpm = el('input');
-      Object.assign(ui.bpm, { type: 'number', min: '30', max: '300', step: '0.1', placeholder: '—' });
+      // Tempo: the number itself is editable; the round buttons nudge it by one.
+      const setBpm = b => { if (b) { song.bpm = Math.round(Math.min(300, Math.max(30, b)) * 100) / 100; save(); } };
+      ui.bpm = el('input', 'ytu-ci-bpm');
+      Object.assign(ui.bpm, { type: 'text', inputMode: 'decimal', placeholder: '\u2014', autocomplete: 'off' });
       ui.bpm.setAttribute('aria-label', 'Tempo in BPM');
       ui.bpm.addEventListener('change', () => {
-        const b = parseFloat(ui.bpm.value);
-        if (b >= 30 && b <= 300) { song.bpm = b; save(); } else refresh();
+        const b = parseFloat(ui.bpm.value.replace(',', '.'));
+        if (b >= 30 && b <= 300) setBpm(b); else refresh();
       });
-      const setBpm = b => { if (b) { song.bpm = Math.min(300, Math.max(30, b)); save(); } };
+      const bpmBox = el('div', 'ytu-ci-bpmbox');
+      bpmBox.append(ui.bpm, el('span', 'ytu-ci-bpmunit', 'BPM'));
+      const tempo = el('div', 'ytu-ci-tempo');
+      tempo.append(
+        btnEl('\u2212', 'Slower by 1 BPM', () => setBpm(Math.round(song.bpm || 121) - 1), 'ytu-ci-round'),
+        bpmBox,
+        btnEl('+', 'Faster by 1 BPM', () => setBpm(Math.round(song.bpm || 119) + 1), 'ytu-ci-round'),
+      );
+      ui.tap = btnEl('', 'Tap on every beat while the song plays, starting on bar 1', tap, 'ytu-ci-tap');
+      ui.tap.append(el('span', 'ytu-ci-dot'), el('span', '', 'Tap along'), el('span', 'ytu-ci-key', 'R'));
+      ui.note = el('div', 'ytu-ci-hint');
 
+      // Where the song starts, and how the count is shaped.
       ui.start = el('span', 'ytu-ci-val');
       const nudge = d => { if (song.start != null) { song.start = Math.max(0, song.start + d); save(); } };
+      const barRow = el('div', 'ytu-ci-row');
+      barRow.append(
+        el('span', 'ytu-ci-label', 'Bar 1 at'), ui.start,
+        btnEl('\u2039', '20 ms earlier', () => nudge(-0.02), 'ytu-ci-small'),
+        btnEl('\u203a', '20 ms later', () => nudge(0.02), 'ytu-ci-small'),
+        btnEl('Here', 'Bar 1 starts at the current position', () => {
+          const v = video();
+          if (v) { song.start = v.currentTime; save(); }
+        }),
+      );
+      const clicks = stepper('Clicks before the song', beatsOf, n => { song.beats = n; save(); }, 1, 16);
+      const bar = stepper('Beats per bar', perBarOf, n => { song.perBar = n; save(); }, 1, 12);
+      ui.beats = clicks.val;
+      ui.perBar = bar.val;
+      const clicksRow = el('div', 'ytu-ci-row');
+      clicksRow.append(el('span', 'ytu-ci-label', 'Count'), clicks.box, el('span', 'ytu-ci-unit', 'clicks'));
+      const barLenRow = el('div', 'ytu-ci-row');
+      barLenRow.append(el('span', 'ytu-ci-label', 'Bar length'), bar.box, el('span', 'ytu-ci-unit', 'beats'));
 
-      ui.beats = el('input');
-      Object.assign(ui.beats, { type: 'number', min: '1', max: '16', step: '1' });
-      ui.beats.setAttribute('aria-label', 'Clicks before the song starts');
-      ui.beats.addEventListener('change', () => {
-        const n = parseInt(ui.beats.value, 10);
-        if (n >= 1 && n <= 16) { song.beats = n; save(); } else refresh();
+      // Sound: pick one and hear it.
+      const sounds = el('div', 'ytu-ci-sounds');
+      ui.sounds = Object.entries(SOUNDS).map(([id, snd]) => {
+        const b = btnEl(snd.label, `Use this sound and hear it`, () => {
+          soundId = id;
+          ctx.storage.set('sound', id);
+          refresh();
+          preview();
+        });
+        b.dataset.sound = id;
+        sounds.appendChild(b);
+        return b;
       });
-
-      ui.perBar = el('input');
-      Object.assign(ui.perBar, { type: 'number', min: '1', max: '12', step: '1' });
-      ui.perBar.setAttribute('aria-label', 'Beats per bar');
-      ui.perBar.addEventListener('change', () => {
-        const n = parseInt(ui.perBar.value, 10);
-        if (n >= 1 && n <= 12) { song.perBar = n; save(); } else refresh();
-      });
-
-      ui.tap = btnEl('Tap', 'Tap on every beat while the song plays, starting on bar 1', tap, 'ytu-ci-tap', 'R');
-      ui.note = el('div', 'ytu-ci-hint');
 
       const actions = el('div', 'ytu-ci-actions');
       actions.append(
         btnEl('Count in', 'Count in and play from bar 1', () => countIn(false), 'ytu-ci-primary', 'G'),
-        btnEl('From here', 'Count in from the bar you are at', () => countIn(true), '', '⇧G'),
+        btnEl('From here', 'Count in from the bar you are at', () => countIn(true), '', '\u21e7G'),
       );
 
-      const tapRow = el('div', 'ytu-ci-row');
-      tapRow.append(el('span', 'ytu-ci-label'), ui.tap, ui.note);
-
+      const body = el('div', 'ytu-ci-body');
       body.append(
-        row('Tempo', ui.bpm, el('span', 'ytu-ci-unit', 'BPM'),
-          btnEl('½', 'Half the tempo', () => setBpm(song.bpm / 2)),
-          btnEl('×2', 'Double the tempo', () => setBpm(song.bpm * 2))),
-        tapRow,
-        row('Bar 1', ui.start,
-          btnEl('‹', '20 ms earlier', () => nudge(-0.02)),
-          btnEl('›', '20 ms later', () => nudge(0.02)),
-          btnEl('Here', 'Bar 1 starts at the current position', () => {
-            const v = video();
-            if (v) { song.start = v.currentTime; save(); }
-          })),
-        row('Clicks', ui.beats, el('span', 'ytu-ci-unit', 'in bars of'), ui.perBar),
+        section(caption('Tempo',
+          btnEl('\u00bd', 'Half the tempo', () => setBpm(song.bpm / 2)),
+          btnEl('\u00d72', 'Double the tempo', () => setBpm(song.bpm * 2))),
+        tempo, ui.tap, ui.note),
+        section(null, barRow, clicksRow, barLenRow),
+        section(caption('Sound'), sounds),
         actions,
       );
       p.append(head, offNote, body);
@@ -495,16 +676,17 @@ YTU.register({
       if (btn) {
         btn.classList.toggle('ytu-ci-set', onHere && !!song.bpm);
         btn.classList.toggle('ytu-ci-disabled', !onHere);
-        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in · ${fmtBpm(song.bpm)} BPM (G)` : 'Count-in (G)';
+        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in \u00b7 ${fmtBpm(song.bpm)} BPM (G)` : 'Count-in (G)';
       }
       if (!panel) return;
       ui.on.checked = onHere;
       panel.classList.toggle('ytu-ci-off', !onHere);
       if (document.activeElement !== ui.bpm) ui.bpm.value = song.bpm ? fmtBpm(song.bpm) : '';
-      if (document.activeElement !== ui.beats) ui.beats.value = String(beatsOf());
-      if (document.activeElement !== ui.perBar) ui.perBar.value = String(perBarOf());
+      ui.beats.textContent = String(beatsOf());
+      ui.perBar.textContent = String(perBarOf());
       ui.start.textContent = song.start != null ? fmtTime(song.start) : 'not set';
-      ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap R on every beat, starting on bar 1.');
+      ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap on every beat, from bar 1.');
+      for (const b of ui.sounds) b.setAttribute('aria-pressed', String(b.dataset.sound === soundId));
     }
 
     function ensureUi() {
@@ -545,7 +727,11 @@ YTU.register({
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
       const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || (k === 'r' && !e.shiftKey));
-      if (inPanel && !(ours && isOn())) { e.stopImmediatePropagation(); return; }
+      if (inPanel && !(ours && isOn())) {
+        e.stopImmediatePropagation();
+        if (e.type === 'keydown' && e.key === 'Enter' && e.target === ui.bpm) ui.bpm.blur(); // applies it
+        return;
+      }
       if (!ours || !isWatch() || !isOn() || (!inPanel && inTextField(e.target))) return;
       e.preventDefault();
       e.stopImmediatePropagation();
