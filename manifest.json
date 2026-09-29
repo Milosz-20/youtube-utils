@@ -1,4 +1,4 @@
-﻿{
+{
   "manifest_version": 3,
   "name": "YouTube Utils",
   "version": "1.1.0",
@@ -49,6 +49,7 @@
         "modules/playback-speed.js",
         "modules/default-quality.js",
         "modules/sponsorblock.js",
+        "modules/count-in.js",
         "modules/block-shortcuts-help.js",
         "core/boot.js"
       ],
