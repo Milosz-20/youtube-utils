@@ -201,13 +201,23 @@ YTU.register({
       }, Math.max(0, delay)));
     }
 
+    // Seeks through YouTube's own player so it doesn't follow up with a seek of its own, then waits
+    // until the video sits at the target and can play straight away (that keeps play() latency
+    // steady). "Sits there" means for 150 ms: on a long video YouTube may still nudge the position
+    // while it loads the new spot.
     function seek(v, t) {
+      const p = player();
+      if (p && typeof p.seekTo === 'function') p.seekTo(t, true);
+      else v.currentTime = t;
       return new Promise(resolve => {
         const began = performance.now();
-        v.currentTime = t;
-        // Wait until it can play straight away: that keeps the play() latency steady.
+        let steadySince = 0;
         const poll = setInterval(() => {
-          if ((!v.seeking && v.readyState >= 3) || performance.now() - began > 8000) {
+          const now = performance.now();
+          if (!v.paused) v.pause(); // YouTube may resume after its seek; the count-in plays it later
+          const there = !v.seeking && v.readyState >= 3 && Math.abs(v.currentTime - t) < 0.1;
+          steadySince = there ? steadySince || now : 0;
+          if ((steadySince && now - steadySince >= 150) || now - began > 8000) {
             clearInterval(poll);
             resolve();
           }
@@ -241,6 +251,7 @@ YTU.register({
       closePanel();
       showOverlay(job, beats);
 
+      job.target = target;
       ownAction = true;
       v.pause();
       await Promise.all([seek(v, target), audioReady]);
@@ -297,6 +308,8 @@ YTU.register({
     // Your own play or seek during a count-in cancels it; a seek also restarts tap tempo.
     function onMedia(e) {
       if (!(e.target instanceof HTMLVideoElement) || ownAction) return;
+      // YouTube re-seeks on its own while it loads the spot we jumped to; those land on our target.
+      if (e.type === 'seeking' && counting && Math.abs(e.target.currentTime - counting.target) < 0.5) return;
       if (e.type === 'seeking') taps = [];
       if (counting) abort();
     }
