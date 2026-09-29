@@ -2,7 +2,7 @@
 YTU.register({
   id: 'count-in',
   name: 'Count-in',
-  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
+  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Shift+R keeps the clicks going along with the video, as a metronome. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
   settings: {
     beats: { type: 'number', label: 'Clicks before the song starts', default: 4, min: 1, max: 16, step: 1 },
     perBar: { type: 'number', label: 'Beats per bar (the first of each bar gets the higher click)', default: 4, min: 1, max: 12, step: 1 },
@@ -111,6 +111,13 @@ YTU.register({
       .ytu-ci-panel .ytu-ci-actions button.ytu-ci-primary { background: #f1f1f1; color: #0f0f0f; }
       .ytu-ci-panel .ytu-ci-actions button.ytu-ci-primary:hover { background: #d9d9d9; }
       .ytu-ci-primary .ytu-ci-key { background: rgba(0, 0, 0, .1); color: rgba(0, 0, 0, .6); }
+      .ytu-ci-toast {
+        position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 60; pointer-events: none;
+        padding: 8px 14px; border-radius: 16px; background: rgba(0, 0, 0, .7);
+        color: #fff; font: 500 13px/1 Roboto, Arial, sans-serif; transition: opacity .3s;
+      }
+      .ytu-ci-btn.ytu-ci-metro .ytu-ci-arm { animation: ytu-ci-swing 1s ease-in-out infinite alternate; transform-origin: 12px 16px; }
+      @keyframes ytu-ci-swing { from { transform: rotate(-38deg); } to { transform: rotate(0deg); } }
       .ytu-ci-overlay {
         position: absolute; inset: 0; z-index: 59; pointer-events: none;
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -468,6 +475,10 @@ YTU.register({
         at(toPerf(first + i * interval), () => showBeat(job, i, perBar), job);
       }
       const downbeat = toPerf(first + beats * interval);
+      // With the metronome on, the count-in plays the "1" of the song too, on the audio clock, and the
+      // metronome carries on from the beat after it.
+      const firstBeat = Math.round((target - (song.start || 0)) / period);
+      if (metroOn()) click(first + beats * interval, true, job.nodes);
       at(downbeat - latency, () => {
         const base = v.currentTime;
         const called = performance.now();
@@ -475,6 +486,7 @@ YTU.register({
         v.play().catch(() => {}).finally(() => { ownAction = false; });
         counting = null;
         hideOverlay(job);
+        if (metroOn()) { metro.nodes = []; metro.next = firstBeat + 1; }
         calibrate(v, base, called, rate);
       }, job, true);
     }
@@ -514,6 +526,83 @@ YTU.register({
     }
     on(document, 'play', onMedia, true);
     on(document, 'seeking', onMedia, true);
+
+    // -------------------------------------------------------------- metronome
+    // Clicks along with the video on the song's beat grid (bar 1 + n beats, in video time), so it
+    // stays in step through seeking, pausing and speed changes. Each pass looks at where the video
+    // is now and schedules the beats of the next 150 ms on the audio clock.
+    const metro = { next: null, nodes: [] }; // next: the beat number to schedule next
+    const metroOn = () => isOn() && !!song.metronome && !!song.bpm;
+
+    function metroReset() {
+      for (const n of metro.nodes) { try { n.stop(); } catch { /* already played */ } }
+      metro.nodes = [];
+      metro.next = null;
+    }
+
+    function metroTick() {
+      const v = video();
+      if (!metroOn() || !v || v.paused || v.seeking || isAd() || counting || !isWatch()) {
+        if (metro.next !== null || metro.nodes.length) metroReset();
+        return;
+      }
+      if (!ac) {
+        // Opened on a video that has it switched on: wait for a click or key before making sound.
+        if (!(navigator.userActivation && navigator.userActivation.hasBeenActive)) return;
+        audio();
+      }
+      if (ac.state === 'suspended') { ac.resume().catch(() => {}); return; }
+
+      const period = 60 / song.bpm;
+      const rate = v.playbackRate || 1;
+      const start = song.start || 0;
+      const perBar = perBarOf();
+      const vt = v.currentTime;
+      const now = ac.currentTime;
+      if (metro.next === null) metro.next = Math.ceil((vt - start) / period - 0.02);
+      for (;;) {
+        const k = metro.next;
+        const when = now + (start + k * period - vt) / rate;
+        if (when > now + 0.15) break;
+        if (when >= now - 0.01) click(Math.max(now, when), ((k % perBar) + perBar) % perBar === 0, metro.nodes);
+        metro.next = k + 1;
+      }
+      if (metro.nodes.length > 40) metro.nodes = metro.nodes.slice(-20);
+    }
+    const metroTimer = setInterval(metroTick, 25);
+    disposers.push(() => { clearInterval(metroTimer); metroReset(); });
+    // Pausing, seeking or changing speed drops the clicks already queued; the next pass re-anchors.
+    for (const type of ['pause', 'seeking', 'ratechange']) {
+      on(document, type, e => { if (e.target instanceof HTMLVideoElement) metroReset(); }, true);
+    }
+
+    let toastTimer = null;
+    function toast(text) {
+      const p = player();
+      if (!p) return;
+      let box = p.querySelector('.ytu-ci-toast');
+      if (!box) { box = el('div', 'ytu-ci-toast'); p.appendChild(box); }
+      box.textContent = text;
+      box.style.opacity = '1';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { box.style.opacity = '0'; }, 1200);
+    }
+    disposers.push(() => { const b = document.querySelector('.ytu-ci-toast'); if (b) b.remove(); });
+
+    function toggleMetronome() {
+      if (!isOn()) return;
+      if (!song.bpm) {
+        openPanel();
+        note = 'Set the tempo first: play the song and tap R on every beat.';
+        refresh();
+        return;
+      }
+      song.metronome = !song.metronome;
+      if (song.metronome) audio(); // inside the key press or click, so the browser lets it sound
+      metroReset();
+      save();
+      toast(song.metronome ? `Metronome on \u00b7 ${fmtBpm(song.bpm)} BPM` : 'Metronome off');
+    }
 
     // -------------------------------------------------------------- UI
     const el = (tag, cls, text) => {
@@ -574,7 +663,7 @@ YTU.register({
       };
       add('path', { d: 'M9.2 3h5.6l3.7 18H5.5z' }); // body
       add('path', { d: 'M6.6 16h10.8' });           // base
-      add('path', { d: 'M12 16l5-9' });             // pendulum
+      add('path', { d: 'M12 16l5-9', class: 'ytu-ci-arm' }); // pendulum
       add('circle', { class: 'ytu-ci-weight', cx: '14.8', cy: '11', r: '1.7', fill: '#fff', stroke: 'none' });
       return svg;
     }
@@ -670,6 +759,16 @@ YTU.register({
           if (v) { song.start = v.currentTime; save(); }
         }),
       );
+      ui.metro = el('input');
+      ui.metro.type = 'checkbox';
+      ui.metro.setAttribute('aria-label', 'Metronome along with the video');
+      ui.metro.addEventListener('change', () => { if (!!song.metronome !== ui.metro.checked) toggleMetronome(); refresh(); });
+      const metroSwitch = el('label', 'ytu-ci-switch');
+      metroSwitch.title = 'Keep clicking along with the video';
+      metroSwitch.append(ui.metro, el('span'));
+      const metroRow = el('div', 'ytu-ci-row');
+      metroRow.append(el('span', 'ytu-ci-label', 'Metronome'), el('span', 'ytu-ci-key', '\u21e7R'), metroSwitch);
+
       const clicks = stepper('Clicks before the song', beatsOf, n => { song.beats = n; save(); }, 1, 16);
       const bar = stepper('Beats per bar', perBarOf, n => { song.perBar = n; save(); }, 1, 12);
       ui.beats = clicks.val;
@@ -717,7 +816,7 @@ YTU.register({
           btnEl('\u00bd', 'Half the tempo', () => setBpm(song.bpm / 2)),
           btnEl('\u00d72', 'Double the tempo', () => setBpm(song.bpm * 2))),
         tempo, ui.tap, ui.note),
-        section(null, barRow, clicksRow, barLenRow, soundRow),
+        section(null, metroRow, barRow, clicksRow, barLenRow, soundRow),
         actions,
       );
       p.append(head, offNote, body);
@@ -729,7 +828,8 @@ YTU.register({
       if (btn) {
         btn.classList.toggle('ytu-ci-set', onHere && !!song.bpm);
         btn.classList.toggle('ytu-ci-disabled', !onHere);
-        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in \u00b7 ${fmtBpm(song.bpm)} BPM (G)` : 'Count-in (G)';
+        btn.classList.toggle('ytu-ci-metro', metroOn());
+        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in \u00b7 ${fmtBpm(song.bpm)} BPM (G)${song.metronome ? ' \u00b7 metronome on' : ''}` : 'Count-in (G)';
       }
       if (!panel) return;
       ui.on.checked = onHere;
@@ -740,6 +840,8 @@ YTU.register({
       ui.start.textContent = song.start != null ? fmtTime(song.start) : 'not set';
       ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap on every beat, from bar 1.');
       if (document.activeElement !== ui.sound) ui.sound.value = soundId;
+      ui.metro.checked = !!song.metronome;
+      ui.metro.disabled = !song.bpm;
     }
 
     function ensureUi() {
@@ -779,7 +881,7 @@ YTU.register({
     function onKey(e) {
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
-      const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || (k === 'r' && !e.shiftKey));
+      const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || k === 'r');
       if (inPanel && !(ours && isOn())) {
         e.stopImmediatePropagation();
         if (e.type === 'keydown' && e.key === 'Enter' && e.target === ui.bpm) ui.bpm.blur(); // applies it
@@ -789,7 +891,8 @@ YTU.register({
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
-      if (k === 'r') tap();
+      if (k === 'r' && e.shiftKey) toggleMetronome();
+      else if (k === 'r') tap();
       else countIn(e.shiftKey);
     }
     for (const type of ['keydown', 'keypress', 'keyup']) on(window, type, onKey, true);
@@ -799,6 +902,7 @@ YTU.register({
       const id = isWatch() ? currentVideoId() : null;
       if (id !== videoId) {
         abort();
+        metroReset();
         videoId = id;
         song = id ? ctx.storage.get('song:' + id, {}) || {} : {};
         taps = [];
