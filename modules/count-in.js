@@ -2,9 +2,10 @@
 YTU.register({
   id: 'count-in',
   name: 'Count-in',
-  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Follows the playback speed and remembers each video.',
+  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
   settings: {
     beats: { type: 'number', label: 'Clicks before the song starts', default: 4, min: 1, max: 16, step: 1 },
+    perBar: { type: 'number', label: 'Beats per bar (the first of each bar gets the higher click)', default: 4, min: 1, max: 12, step: 1 },
     volume: { type: 'number', label: 'Click volume (%)', default: 70, min: 0, max: 100, step: 5 },
     showCount: { type: 'boolean', label: 'Show the count on the video', default: true },
   },
@@ -62,6 +63,7 @@ YTU.register({
       .ytu-ci-dots span { width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 255, 255, .3); box-shadow: 0 1px 6px rgba(0, 0, 0, .5); }
       .ytu-ci-dots span.on { background: #fff; }
       .ytu-ci-dots span.ytu-ci-accent.on { background: #3ea6ff; }
+      .ytu-ci-dots span.ytu-ci-accent:not(:first-child) { margin-left: 14px; } /* gap between bars */
     `;
     (document.head || document.documentElement).appendChild(style);
     disposers.push(() => style.remove());
@@ -85,10 +87,11 @@ YTU.register({
     };
 
     // -------------------------------------------------------------- per-video song data
-    // { bpm, start (video seconds of bar 1's first beat), beats (count-in length) }
+    // { bpm, start (video seconds of bar 1's first beat), beats (count-in length), perBar (beats in a bar) }
     let videoId = null;
     let song = {};
     const beatsOf = () => song.beats || s.beats;
+    const perBarOf = () => song.perBar || s.perBar;
     function save() {
       if (videoId) ctx.storage.set('song:' + videoId, song);
       refresh();
@@ -239,17 +242,18 @@ YTU.register({
 
       const period = 60 / song.bpm;
       const beats = beatsOf();
+      const perBar = perBarOf();
       let target = song.start != null ? song.start : v.currentTime;
       if (fromHere && song.start != null) {
         // The bar you're in, or the next one if you're just before it.
-        const bar = period * beats;
+        const bar = period * perBar;
         target = song.start + Math.max(0, Math.floor((v.currentTime - song.start) / bar + 0.1)) * bar;
       }
       target = Math.max(0, Math.min(target, (v.duration || Infinity) - 0.5));
 
       const job = counting = { timers: [], nodes: [], overlay: null };
       closePanel();
-      showOverlay(job, beats);
+      showOverlay(job, beats, perBar);
 
       job.target = target;
       ownAction = true;
@@ -265,8 +269,8 @@ YTU.register({
       const toPerf = c => perfNow + (c - ctxNow) * 1000;
       const first = ctxNow + 0.15;
       for (let i = 0; i < beats; i++) {
-        click(first + i * interval, i === 0, job.nodes);
-        at(toPerf(first + i * interval), () => showBeat(job, i), job);
+        click(first + i * interval, i % perBar === 0, job.nodes); // higher click on every bar's "1"
+        at(toPerf(first + i * interval), () => showBeat(job, i, perBar), job);
       }
       const downbeat = toPerf(first + beats * interval);
       at(downbeat - latency, () => {
@@ -337,21 +341,21 @@ YTU.register({
       return r;
     };
 
-    function showOverlay(job, beats) {
+    function showOverlay(job, beats, perBar) {
       const p = player();
       if (!s.showCount || !p) return;
       const box = el('div', 'ytu-ci-overlay');
       const num = el('div', 'ytu-ci-num');
       const dots = el('div', 'ytu-ci-dots');
-      for (let i = 0; i < beats; i++) dots.appendChild(el('span', i === 0 ? 'ytu-ci-accent' : ''));
+      for (let i = 0; i < beats; i++) dots.appendChild(el('span', i % perBar === 0 ? 'ytu-ci-accent' : ''));
       box.append(num, dots);
       p.appendChild(box);
       job.overlay = { box, num, dots };
     }
 
-    function showBeat(job, i) {
+    function showBeat(job, i, perBar) {
       if (!job.overlay) return;
-      job.overlay.num.textContent = String(i + 1);
+      job.overlay.num.textContent = String((i % perBar) + 1); // "1 2 3 4 1 2 3 4", like a drummer counts
       [...job.overlay.dots.children].forEach((d, k) => d.classList.toggle('on', k <= i));
     }
 
@@ -420,6 +424,14 @@ YTU.register({
         if (n >= 1 && n <= 16) { song.beats = n; save(); } else refresh();
       });
 
+      ui.perBar = el('input');
+      Object.assign(ui.perBar, { type: 'number', min: '1', max: '12', step: '1' });
+      ui.perBar.setAttribute('aria-label', 'Beats per bar');
+      ui.perBar.addEventListener('change', () => {
+        const n = parseInt(ui.perBar.value, 10);
+        if (n >= 1 && n <= 12) { song.perBar = n; save(); } else refresh();
+      });
+
       ui.tap = btnEl('Tap', 'Tap on every beat while the song plays, starting on bar 1', tap, 'ytu-ci-tap', 'R');
       ui.note = el('div', 'ytu-ci-hint');
 
@@ -445,7 +457,7 @@ YTU.register({
             const v = video();
             if (v) { song.start = v.currentTime; save(); }
           })),
-        row('Clicks', ui.beats),
+        row('Clicks', ui.beats, el('span', 'ytu-ci-unit', 'in bars of'), ui.perBar),
         actions,
       );
       return p;
@@ -459,6 +471,7 @@ YTU.register({
       if (!panel) return;
       if (document.activeElement !== ui.bpm) ui.bpm.value = song.bpm ? fmtBpm(song.bpm) : '';
       if (document.activeElement !== ui.beats) ui.beats.value = String(beatsOf());
+      if (document.activeElement !== ui.perBar) ui.perBar.value = String(perBarOf());
       ui.start.textContent = song.start != null ? fmtTime(song.start) : 'not set';
       ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap R on every beat, starting on bar 1.');
     }
