@@ -96,9 +96,15 @@ YTU.register({
       .ytu-ci-stepper span { min-width: 22px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; }
       .ytu-ci-unit { min-width: 42px; color: rgba(255, 255, 255, .5); font-size: 12px; }
 
-      .ytu-ci-sounds { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-      .ytu-ci-panel .ytu-ci-sounds button { height: 26px; padding: 0 4px; font-size: 11.5px; }
-      .ytu-ci-panel .ytu-ci-sounds button[aria-pressed="true"] { background: #f1f1f1; color: #0f0f0f; }
+      .ytu-ci-panel select.ytu-ci-sound {
+        appearance: none; -moz-appearance: none; width: 150px; height: 28px; padding: 0 28px 0 12px;
+        border: none; border-radius: 14px; cursor: pointer;
+        background: rgba(255, 255, 255, .1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;
+        color: #f1f1f1; font: 500 12px/1 Roboto, Arial, sans-serif;
+      }
+      .ytu-ci-panel select.ytu-ci-sound:hover { background-color: rgba(255, 255, 255, .18); }
+      .ytu-ci-panel select.ytu-ci-sound:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 1px; }
+      .ytu-ci-panel select.ytu-ci-sound option, .ytu-ci-panel select.ytu-ci-sound optgroup { background: #282828; color: #f1f1f1; }
 
       .ytu-ci-actions { display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
       .ytu-ci-panel .ytu-ci-actions button { flex: 1; height: 36px; border-radius: 18px; font-size: 13px; }
@@ -287,19 +293,23 @@ YTU.register({
     const SOUNDS = {
       // Kick on every bar's "1", snare on the rest: how a drummer's count feels.
       kit: {
-        label: 'Kit',
+        group: 'Drums',
+        label: 'Kit (kick + snare)',
         play(when, accent, vol, nodes) { if (accent) kick(when, vol, nodes); else snare(when, vol * 0.85, nodes); },
       },
       kick: {
+        group: 'Drums',
         label: 'Kick',
         play(when, accent, vol, nodes) { kick(when, vol, nodes); },
       },
       snare: {
+        group: 'Drums',
         label: 'Snare',
         play(when, accent, vol, nodes) { snare(when, vol, nodes); },
       },
       // A higher tom for the "1", a lower one for the rest.
       tom: {
+        group: 'Drums',
         label: 'Toms',
         play(when, accent, vol, nodes) { tom(when, accent, vol, nodes); },
       },
@@ -319,7 +329,7 @@ YTU.register({
         },
       },
       woodblock: {
-        label: 'Wood',
+        label: 'Woodblock',
         play(when, accent, vol, nodes) {
           tone(when, 'sine', accent ? 1250 : 950, vol, 0.07, nodes, accent ? 1150 : 880);
           noiseHit(when, 'bandpass', 2000, 1, vol * 0.4, 0.008, nodes);
@@ -669,19 +679,31 @@ YTU.register({
       const barLenRow = el('div', 'ytu-ci-row');
       barLenRow.append(el('span', 'ytu-ci-label', 'Bar length'), bar.box, el('span', 'ytu-ci-unit', 'beats'));
 
-      // Sound: pick one and hear it.
-      const sounds = el('div', 'ytu-ci-sounds');
-      ui.sounds = Object.entries(SOUNDS).map(([id, snd]) => {
-        const b = btnEl(snd.label, `Use this sound and hear it`, () => {
-          soundId = id;
-          ctx.storage.set('sound', id);
-          refresh();
-          preview();
-        });
-        b.dataset.sound = id;
-        sounds.appendChild(b);
-        return b;
+      // Sound: a dropdown (drums first), heard as soon as you pick one; ▶ plays it again.
+      ui.sound = el('select', 'ytu-ci-sound');
+      ui.sound.setAttribute('aria-label', 'Count-in sound');
+      const groups = {};
+      for (const [id, snd] of Object.entries(SOUNDS)) {
+        const name = snd.group || 'Other';
+        if (!groups[name]) {
+          groups[name] = el('optgroup');
+          groups[name].label = name;
+          ui.sound.appendChild(groups[name]);
+        }
+        const o = el('option', '', snd.label);
+        o.value = id;
+        groups[name].appendChild(o);
+      }
+      ui.sound.addEventListener('change', () => {
+        soundId = ui.sound.value;
+        ctx.storage.set('sound', soundId);
+        preview();
       });
+      const soundRow = el('div', 'ytu-ci-row');
+      soundRow.append(
+        el('span', 'ytu-ci-label', 'Sound'), ui.sound,
+        btnEl('\u25b6\ufe0e', 'Play it', preview, 'ytu-ci-small'),
+      );
 
       const actions = el('div', 'ytu-ci-actions');
       actions.append(
@@ -695,8 +717,7 @@ YTU.register({
           btnEl('\u00bd', 'Half the tempo', () => setBpm(song.bpm / 2)),
           btnEl('\u00d72', 'Double the tempo', () => setBpm(song.bpm * 2))),
         tempo, ui.tap, ui.note),
-        section(null, barRow, clicksRow, barLenRow),
-        section(caption('Sound'), sounds),
+        section(null, barRow, clicksRow, barLenRow, soundRow),
         actions,
       );
       p.append(head, offNote, body);
@@ -718,7 +739,7 @@ YTU.register({
       ui.perBar.textContent = String(perBarOf());
       ui.start.textContent = song.start != null ? fmtTime(song.start) : 'not set';
       ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap on every beat, from bar 1.');
-      for (const b of ui.sounds) b.setAttribute('aria-pressed', String(b.dataset.sound === soundId));
+      if (document.activeElement !== ui.sound) ui.sound.value = soundId;
     }
 
     function ensureUi() {
