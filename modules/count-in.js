@@ -1,8 +1,8 @@
 // Count-in: metronome clicks "1 2 3 4" at the song's own tempo, then the video starts right on the beat.
 YTU.register({
   id: 'count-in',
-  name: 'Count-in',
-  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Shift+R keeps the clicks going along with the video, as a metronome. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
+  name: 'Count-in & loop',
+  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Shift+R keeps the clicks going along with the video, as a metronome. [ and ] mark a passage, \\ loops it, optionally with a count-in before every repeat. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
   settings: {
     beats: { type: 'number', label: 'Clicks before the song starts', default: 4, min: 1, max: 16, step: 1 },
     perBar: { type: 'number', label: 'Beats per bar (the first of each bar gets the higher click)', default: 4, min: 1, max: 12, step: 1 },
@@ -118,6 +118,13 @@ YTU.register({
       }
       .ytu-ci-btn.ytu-ci-metro .ytu-ci-arm { animation: ytu-ci-swing 1s ease-in-out infinite alternate; transform-origin: 12px 16px; }
       @keyframes ytu-ci-swing { from { transform: rotate(-38deg); } to { transform: rotate(0deg); } }
+      .ytu-ci-loopbar {
+        position: absolute; top: -1px; bottom: -1px; z-index: 36; pointer-events: none; box-sizing: border-box;
+        background: rgba(62, 166, 255, .22); border-left: 2px solid #3ea6ff; border-right: 2px solid #3ea6ff;
+      }
+      .ytu-ci-loopbar.ytu-ci-loop-active { background: rgba(62, 166, 255, .45); }
+      .ytu-ci-loopbar.ytu-ci-loop-open { border-right: none; }
+      .ytu-ci-loopinfo { margin-right: auto; color: rgba(255, 255, 255, .5); font-size: 12px; }
       .ytu-ci-overlay {
         position: absolute; inset: 0; z-index: 59; pointer-events: none;
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
@@ -430,7 +437,7 @@ YTU.register({
       });
     }
 
-    async function countIn(fromHere) {
+    async function countIn(fromHere, opts = {}) {
       if (counting) { abort(); return; } // pressing it again cancels
       const v = video();
       if (!isWatch() || !v || isAd() || !isOn()) return;
@@ -446,7 +453,9 @@ YTU.register({
       const beats = beatsOf();
       const perBar = perBarOf();
       let target = song.start != null ? song.start : v.currentTime;
-      if (fromHere && song.start != null) {
+      if (opts.target != null) target = opts.target;
+      else if (!fromHere && loopReady()) target = song.loop.a; // with a loop set, G counts into the loop
+      else if (fromHere && song.start != null) {
         // The bar you're in, or the next one if you're just before it.
         const bar = period * perBar;
         target = song.start + Math.max(0, Math.floor((v.currentTime - song.start) / bar + 0.1)) * bar;
@@ -454,7 +463,7 @@ YTU.register({
       target = Math.max(0, Math.min(target, (v.duration || Infinity) - 0.5));
 
       const job = counting = { timers: [], nodes: [], overlay: null };
-      closePanel();
+      if (!opts.keepPanel) closePanel();
       showOverlay(job, beats, perBar);
 
       job.target = target;
@@ -576,6 +585,118 @@ YTU.register({
       on(document, type, e => { if (e.target instanceof HTMLVideoElement) metroReset(); }, true);
     }
 
+    // -------------------------------------------------------------- loop (A-B)
+    // song.loop = { a, b, on, countIn }. Playing into B jumps back to A, or pauses and counts in to A.
+    // Only playback running into B triggers it: seeking past B on purpose doesn't snap you back.
+    const loopOf = () => song.loop || (song.loop = { a: null, b: null, on: false, countIn: false });
+    const loopReady = () => {
+      const L = song.loop;
+      return isOn() && !!L && !!L.on && L.a != null && L.b != null && L.b > L.a + 0.05;
+    };
+    let loopLast = null;
+    let loopLastWall = 0;
+
+    function loopTick() {
+      const v = video();
+      if (!loopReady() || !v || v.paused || v.seeking || isAd() || counting) { loopLast = null; return; }
+      const { a, b } = song.loop;
+      const t = v.currentTime;
+      // Moving further than playback could have since the last pass is a seek, not playing into B.
+      // Measured against real elapsed time, since timers slow down in a background tab.
+      const wall = performance.now();
+      if (loopLast != null && Math.abs(t - loopLast - ((wall - loopLastWall) / 1000) * (v.playbackRate || 1)) > 0.3) loopLast = null;
+      loopLastWall = wall;
+      if (loopLast != null && loopLast >= a - 0.3 && loopLast < b && t >= b - 0.015) {
+        loopLast = null;
+        if (song.loop.countIn && song.bpm) countIn(false, { target: a, keepPanel: true });
+        else v.currentTime = a;
+        return;
+      }
+      loopLast = t;
+    }
+    const loopTimer = setInterval(loopTick, 15);
+    on(document, 'seeking', e => { if (e.target instanceof HTMLVideoElement) loopLast = null; }, true);
+    disposers.push(() => clearInterval(loopTimer));
+
+    function setLoopPoint(which, time) {
+      const v = video();
+      if (!isOn() || !v) return;
+      const L = loopOf();
+      L[which] = Math.max(0, time != null ? time : v.currentTime);
+      if (L.a != null && L.b != null && L.b < L.a) [L.a, L.b] = [L.b, L.a];
+      if (L.a != null && L.b != null && L.b - L.a < 0.05) L[which === 'a' ? 'b' : 'a'] = null;
+      save();
+      toast(`${which === 'a' ? 'Loop start' : 'Loop end'} ${fmtTime(L[which])}`);
+    }
+
+    function nudgeLoop(which, d) {
+      const L = song.loop;
+      if (!L || L[which] == null) return;
+      const v = video();
+      const max = v && v.duration ? v.duration : Infinity;
+      const next = Math.max(0, Math.min(max, L[which] + d));
+      const other = L[which === 'a' ? 'b' : 'a'];
+      if (other != null && (which === 'a' ? next >= other - 0.05 : next <= other + 0.05)) return;
+      L[which] = next;
+      save();
+    }
+
+    // Moves A and B onto the nearest bar lines of the tapped beat grid.
+    function snapLoop() {
+      const L = song.loop;
+      if (!L || L.a == null || !song.bpm) return;
+      const bar = (60 / song.bpm) * perBarOf();
+      const start = song.start || 0;
+      const snap = x => start + Math.round((x - start) / bar) * bar;
+      L.a = Math.max(0, snap(L.a));
+      if (L.b != null) L.b = Math.max(L.a + bar, snap(L.b));
+      save();
+    }
+
+    function toggleLoop() {
+      if (!isOn()) return;
+      const L = loopOf();
+      if (L.a == null || L.b == null) {
+        openPanel();
+        note = 'Mark the loop first: [ at its start, ] at its end.';
+        refresh();
+        return;
+      }
+      L.on = !L.on;
+      save();
+      toast(L.on ? `Loop ${fmtTime(L.a)} \u2013 ${fmtTime(L.b)}` : 'Loop off');
+      const v = video();
+      if (!L.on || !v) return;
+      audio(); // inside the key press or click, so the count-in can sound later
+      // Switched on from outside the loop: start at its beginning.
+      if (v.currentTime < L.a - 0.05 || v.currentTime >= L.b) {
+        if (L.countIn && song.bpm) countIn(false, { target: L.a, keepPanel: true });
+        else v.currentTime = L.a;
+      }
+    }
+
+    // The loop on the progress bar: outlined while marked, filled while looping.
+    let loopBar = null;
+    function drawLoopBar() {
+      const p = player();
+      const host = p && p.querySelector('.ytp-progress-bar');
+      const v = video();
+      const L = song.loop;
+      const dur = v && v.duration;
+      if (!isWatch() || !host || !dur || !isFinite(dur) || isAd() || !isOn() || !L || L.a == null) {
+        if (loopBar) { loopBar.remove(); loopBar = null; }
+        return;
+      }
+      if (!loopBar) loopBar = el('div', 'ytu-ci-loopbar');
+      const end = L.b != null ? L.b : L.a;
+      loopBar.style.left = (L.a / dur) * 100 + '%';
+      loopBar.style.width = Math.max(0.2, ((end - L.a) / dur) * 100) + '%';
+      loopBar.classList.toggle('ytu-ci-loop-active', !!L.on && L.b != null);
+      loopBar.classList.toggle('ytu-ci-loop-open', L.b == null);
+      if (loopBar.parentElement !== host) host.appendChild(loopBar);
+    }
+    disposers.push(() => { if (loopBar) loopBar.remove(); });
+
     let toastTimer = null;
     function toast(text) {
       const p = player();
@@ -616,7 +737,7 @@ YTU.register({
       b.type = 'button';
       if (title) b.title = title;
       if (key) b.appendChild(el('span', 'ytu-ci-key', key));
-      b.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+      b.addEventListener('click', e => { e.stopPropagation(); onClick(e); });
       return b;
     };
     const row = (label, ...kids) => {
@@ -804,6 +925,42 @@ YTU.register({
         btnEl('\u25b6\ufe0e', 'Play it', preview, 'ytu-ci-small'),
       );
 
+      // Loop: A and B, each nudged by 50 ms (10 ms with Shift), snapped to bars, and how it repeats.
+      const loopPoint = (which, label, key) => {
+        const val = el('span', 'ytu-ci-val');
+        const r = el('div', 'ytu-ci-row');
+        r.append(
+          el('span', 'ytu-ci-label', label), val,
+          btnEl('\u2039', '50 ms earlier (Shift: 10 ms)', e => nudgeLoop(which, e && e.shiftKey ? -0.01 : -0.05), 'ytu-ci-small'),
+          btnEl('\u203a', '50 ms later (Shift: 10 ms)', e => nudgeLoop(which, e && e.shiftKey ? 0.01 : 0.05), 'ytu-ci-small'),
+          btnEl('Set', `Set the loop ${which === 'a' ? 'start' : 'end'} to the current position`, () => setLoopPoint(which), '', key),
+        );
+        return { r, val };
+      };
+      const la = loopPoint('a', 'Start', '[');
+      const lb = loopPoint('b', 'End', ']');
+      ui.loopA = la.val;
+      ui.loopB = lb.val;
+      ui.loopOn = el('input');
+      ui.loopOn.type = 'checkbox';
+      ui.loopOn.setAttribute('aria-label', 'Loop');
+      ui.loopOn.addEventListener('change', () => { if (!!(song.loop && song.loop.on) !== ui.loopOn.checked) toggleLoop(); refresh(); });
+      const loopSwitch = el('label', 'ytu-ci-switch');
+      loopSwitch.title = 'Loop between start and end (\\)';
+      loopSwitch.append(ui.loopOn, el('span'));
+      ui.loopCount = el('input');
+      ui.loopCount.type = 'checkbox';
+      ui.loopCount.setAttribute('aria-label', 'Count in before every repeat');
+      ui.loopCount.addEventListener('change', () => { loopOf().countIn = ui.loopCount.checked; save(); });
+      const countSwitch = el('label', 'ytu-ci-switch');
+      countSwitch.append(ui.loopCount, el('span'));
+      const countRow = el('div', 'ytu-ci-row');
+      countRow.append(el('span', 'ytu-ci-label', 'Count in every repeat'), countSwitch);
+      ui.loopInfo = el('span', 'ytu-ci-loopinfo');
+      ui.snap = btnEl('Snap to bars', 'Move start and end onto the nearest bar lines', snapLoop);
+      const infoRow = el('div', 'ytu-ci-row');
+      infoRow.append(ui.loopInfo, ui.snap);
+
       const actions = el('div', 'ytu-ci-actions');
       actions.append(
         btnEl('Count in', 'Count in and play from bar 1', () => countIn(false), 'ytu-ci-primary', 'G'),
@@ -817,6 +974,7 @@ YTU.register({
           btnEl('\u00d72', 'Double the tempo', () => setBpm(song.bpm * 2))),
         tempo, ui.tap, ui.note),
         section(null, metroRow, barRow, clicksRow, barLenRow, soundRow),
+        section(caption('Loop', el('span', 'ytu-ci-key', '\\'), loopSwitch), la.r, lb.r, infoRow, countRow),
         actions,
       );
       p.append(head, offNote, body);
@@ -842,6 +1000,20 @@ YTU.register({
       if (document.activeElement !== ui.sound) ui.sound.value = soundId;
       ui.metro.checked = !!song.metronome;
       ui.metro.disabled = !song.bpm;
+      const L = song.loop || {};
+      ui.loopA.textContent = L.a != null ? fmtTime(L.a) : 'not set';
+      ui.loopB.textContent = L.b != null ? fmtTime(L.b) : 'not set';
+      ui.loopOn.checked = !!L.on;
+      ui.loopOn.disabled = L.a == null || L.b == null;
+      ui.loopCount.checked = !!L.countIn;
+      ui.loopCount.disabled = !song.bpm;
+      ui.snap.disabled = L.a == null || !song.bpm;
+      if (L.a != null && L.b != null) {
+        const len = L.b - L.a;
+        const bars = song.bpm ? len / ((60 / song.bpm) * perBarOf()) : null;
+        ui.loopInfo.textContent = `${len.toFixed(2)} s` + (bars != null ? ` \u00b7 ${Math.round(bars * 10) / 10} bars` : '');
+      } else ui.loopInfo.textContent = '';
+      drawLoopBar();
     }
 
     function ensureUi() {
@@ -881,7 +1053,7 @@ YTU.register({
     function onKey(e) {
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
-      const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || k === 'r');
+      const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || k === 'r' || ['[', ']', '\\'].includes(e.key));
       if (inPanel && !(ours && isOn())) {
         e.stopImmediatePropagation();
         if (e.type === 'keydown' && e.key === 'Enter' && e.target === ui.bpm) ui.bpm.blur(); // applies it
@@ -891,7 +1063,10 @@ YTU.register({
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
-      if (k === 'r' && e.shiftKey) toggleMetronome();
+      if (e.key === '[') setLoopPoint('a');
+      else if (e.key === ']') setLoopPoint('b');
+      else if (e.key === '\\') toggleLoop();
+      else if (k === 'r' && e.shiftKey) toggleMetronome();
       else if (k === 'r') tap();
       else countIn(e.shiftKey);
     }
