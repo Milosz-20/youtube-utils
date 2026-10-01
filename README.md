@@ -1,117 +1,95 @@
 # YouTube Utils
 
-A Firefox extension that bundles YouTube tweaks as switchable modules, plus Tampermonkey-style user scripts.
+A Firefox extension that makes YouTube calmer and more useful — especially if you learn music from it.
 
-## Built-in modules
+- **Shorts without the doomscroll** — see Shorts only from channels you subscribe to (or none at all), and watch one Short at a time instead of an endless feed.
+- **Practice tools for musicians** — a drum count-in before the song starts, a metronome that plays along with the video, and an A–B loop for the hard bits.
+- **Small fixes** — your preferred video quality every time, finer playback speed, and SponsorBlock to skip sponsor segments.
 
-| Module | What it does |
+Every feature can be switched on or off on its own.
+
+## Install
+
+You need **Firefox 140 or newer** (desktop).
+
+1. Go to [**Releases**](../../releases/latest) and download the `.xpi` file.
+2. In Firefox, open the menu ☰ → **Add-ons and themes** (or press `Ctrl+Shift+A`).
+3. Click the gear ⚙ → **Install Add-on From File…** and pick the `.xpi` you downloaded.
+4. Click **Add**, then refresh any YouTube tabs you have open.
+
+The extension is signed by Mozilla, so Firefox will install it normally.
+
+**Updating:** download the newer `.xpi` from Releases and install it the same way. Your settings are kept. Firefox won't update it on its own.
+
+## Getting around
+
+Click the extension's icon in the Firefox toolbar (if you don't see it, it's under the puzzle-piece icon 🧩 — right-click it there and choose *Pin to Toolbar*). You get a list of features with a switch for each. Hover the ⓘ next to a name to see what it does.
+
+**Open full settings** at the top takes you to the page with every option.
+
+## Features
+
+### Shorts filter
+Home, search results and the sidebar next to a video only show Shorts from channels **you subscribe to**. Switch the dropdown in the toolbar popup to **Hide all** to get rid of Shorts completely. Your Subscriptions feed and channel pages are never filtered.
+
+> You need to be signed in to YouTube for this, so the extension can read your subscription list.
+
+### One Short at a time
+When you open a Short, you watch **just that Short**. Scrolling, swiping and the arrow keys won't take you to the next one. To leave, click the **←** button next to the video, press **Esc**, or go back as usual in your browser.
+
+### Video quality
+Every video starts in the quality you choose (for example 1080p) instead of YouTube's "Auto". Pick it from the dropdown in the toolbar popup.
+
+### Precise playback speed
+`Shift + >` and `Shift + <` change the speed in small steps (0.05×), with a small indicator on the video. Handy for slowing a song down to learn it.
+
+### SponsorBlock
+Skips sponsor segments, using the community [SponsorBlock](https://sponsor.ajay.app) database. Choose **Skip automatically** or **Show Skip button** in the popup. The segments are marked on the progress bar.
+
+### Count-in & loop — for practising along with a video
+
+This one is off by default, so it never gets in the way of normal watching. Here's how to use it the first time:
+
+1. Open the video you want to play along with.
+2. Click the **metronome icon** in the player's bottom bar (next to the ⚙ gear) and turn the switch **on**. This is remembered for this video.
+3. **Set the tempo:** play the song and press **`R`** on every beat, starting on the first beat of the song — like tapping your foot. After 4–8 taps the tempo appears in the panel. This also marks where the song starts ("Bar 1").
+4. Press **`G`**. The video jumps back to the start of the song, a drummer counts you in *"1, 2, 3, 4"*, and the song starts right on the beat.
+
+From there:
+
+- **Metronome** — press **`Shift + R`** to keep the beat clicking along with the video. It stays in time when you pause, skip around or slow the video down.
+- **Loop a hard part** — press **`[`** where it starts and **`]`** where it ends, then **`\`** to loop it. Fine-tune both ends with the ‹ › buttons in the panel, or press **Snap to bars** to line them up with the beat. Turn on **Count in every repeat** to get a count-in before each pass.
+- **Start from the middle** — `Shift + G` counts you in from the bar you're currently at.
+- **Sound** — choose a drum kit, snare, toms, sticks, hi-hat, cowbell and more in the panel. Picking one plays a preview.
+
+If the count-in starts a little early or late, nudge **Bar 1** with the ‹ › buttons in the panel. Each video keeps its own tempo, loop and settings.
+
+### Keyboard shortcuts
+
+| Key | What it does |
 | --- | --- |
-| **Shorts filter** | Mode *Subscriptions only*: Home, search and the watch-page sidebar show Shorts only from channels you follow. Mode *Hide all*: all Shorts, shelves and the channel Shorts tab are hidden, and Shorts links open as normal videos. The Subscriptions feed and channel pages are never filtered. Sidebar "Shorts" tab hidden. |
-| **One Short at a time** | Opening a Short plays only that one: scrolling, swiping, arrow keys and auto-advance can't move to the next Short, and no neighbouring Short peeks in at the bottom. Adds a back arrow (and Esc) to leave the Short, since the player has none. Ambient mode's glow around the Short is hidden by default. Works on its own, whether or not the feed filter is on. |
-| **Precise playback speed** | `Shift + >` / `Shift + <` changes speed in 0.05× steps with an on-video indicator. Step, min and max are configurable. |
-| **Default video quality** | Every new video starts in your chosen quality (e.g. 1080p) instead of Auto, falling back to the next lower one. Optional for Shorts. |
-| **SponsorBlock** | Skips sponsor segments from the community [SponsorBlock](https://sponsor.ajay.app) database — automatically (with an *Undo* notice) or via a *Skip* button in the player. Categories are selectable; segments are marked on the progress bar. Privacy: only a 4-character hash prefix of the video ID is sent. |
-| **Count-in & loop** | Off until you switch it on for a video (in the player panel), so R and G stay free elsewhere. For playing along: counts "1 2 3 4" with metronome clicks, then starts the video on the beat. Press `R` on every beat while the song plays, starting on bar 1 — that sets both the tempo and where bar 1 is (taps are measured in video time, so it works on a slowed-down video too). `G` counts in from bar 1, `Shift+G` from the bar you are at, and `Shift+R` turns on a metronome that keeps clicking along with the video on the song's beat grid (in step through seeking, pausing and speed changes; the count-in hands over to it seamlessly). The count can span several bars (e.g. 8 clicks in bars of 4), each bar starting with a higher click. Tempo, bar 1, count length and beats per bar can be fine-tuned from the metronome button in the player. The count is played on a drum kit (kick on each bar's "1", snare on the rest), kick, snare, toms, drumsticks, hi-hat, woodblock, cowbell or a plain beep, picked (and previewed) in the panel. Loop: `[` marks the start, `]` the end, `\` loops it; both ends can be nudged by 50 ms (10 ms with Shift) or snapped to bar lines, the loop shows on the progress bar, and it can count in before every repeat. Clicks follow the playback speed; settings are remembered per video. |
-| **Block the Shift + ? shortcuts menu** | Stops Shift + ? from opening YouTube's keyboard shortcuts overlay (typing "?" in text fields still works). |
+| `Shift + >` / `Shift + <` | Faster / slower |
+| `R` | Tap the tempo (count-in must be on for this video) |
+| `G` | Count in and play from the start of the song, or from the start of the loop |
+| `Shift + G` | Count in from the bar you're at |
+| `Shift + R` | Metronome on / off |
+| `[` / `]` | Mark the start / end of a loop |
+| `\` | Loop on / off |
+| `Esc` | Leave a Short |
 
-Each module has an on/off switch and its own settings on the options page. Changes apply to open YouTube tabs immediately.
+The count-in keys only work on videos where you've switched the count-in on, so they never clash with anything else.
 
-## Install (Firefox 128+)
+## Something not working?
 
-**For development** (removed when Firefox restarts):
+- **Refresh the YouTube tab** after installing or updating — open tabs don't pick up the extension until then.
+- **Nothing happens on YouTube at all:** click the puzzle-piece icon 🧩 and make sure YouTube Utils is allowed to run on youtube.com.
+- **Shorts filter shows nothing, or everything:** check you're signed in to YouTube, then click **Refresh subscription list now** in the full settings.
+- **No count-in sound:** click somewhere on the page once — browsers only allow sound after you've interacted with the page — and check *Click volume* in the full settings.
 
-1. Open `about:debugging#/runtime/this-firefox`
-2. **Load Temporary Add-on…** → pick `manifest.json`
+## Privacy
 
-**Permanently:** Firefox only installs signed extensions. Either
+Nothing is collected or sent anywhere by this extension. Your subscription list is read from YouTube with your own login and kept in your browser. SponsorBlock lookups send only the first 4 characters of a hash of the video ID, so the server can't tell which video you're watching.
 
-- sign it for free as an *unlisted* add-on on [addons.mozilla.org](https://addons.mozilla.org/developers/) (upload a zip of this folder, you get a signed `.xpi` back), or
-- use Firefox Developer Edition / Nightly, set `xpinstall.signatures.required` to `false` in `about:config`, zip the folder contents and install the zip via `about:addons` → ⚙ → *Install Add-on From File*.
+## For developers
 
-If nothing happens on YouTube, open the Extensions menu (puzzle icon) and make sure YouTube Utils is allowed on youtube.com.
-
-## Releasing an update
-
-1. Change the code.
-2. `.\package.ps1` (patch bump) — also `minor`, `major`, `-Version 1.4.2` or `-NoBump`. It writes the new version into `manifest.json` and builds `..\youtube-utils-<version>.zip` with correct zip paths.
-3. Upload that zip at [addons.mozilla.org](https://addons.mozilla.org/developers/addon/youtube-utils/versions/submit/), pick **On your own**, source code **No**, submit.
-4. When signing finishes, download the `.xpi` from *Manage Status & Versions* and install it via `about:addons` → ⚙ → *Install Add-on From File*.
-
-AMO refuses a version number it has already seen, so always bump.
-
-## Adding a module
-
-1. Create `modules/my-feature.js`:
-
-   ```js
-   YTU.register({
-     id: 'my-feature',
-     name: 'My feature',
-     description: 'One sentence shown on the options page.',
-     enabledByDefault: true,
-     settings: {
-       loud:   { type: 'boolean', label: 'Be loud', default: false },
-       volume: { type: 'number',  label: 'Volume', default: 50, min: 0, max: 100, step: 5 },
-       mode:   { type: 'select',  label: 'Mode', default: 'a', options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] },
-       reset:  { type: 'action',  label: 'Reset something now' },
-     },
-     run(ctx) {
-       // ctx.settings        live settings object (always current values)
-       // ctx.onChange(fn)    fn(changedKeys, settings) on every change; 'action' settings fire here when clicked
-       // ctx.storage         get(key, fallback) / set(key, value) / remove(key), per-module, JSON
-       // ctx.log(...)        console.log with the module's name
-       const onKey = e => { /* ... */ };
-       window.addEventListener('keydown', onKey, true);
-       return () => window.removeEventListener('keydown', onKey, true); // cleanup when switched off
-     },
-   });
-   ```
-
-2. Add `"modules/my-feature.js"` to the page-world `content_scripts` entry in `manifest.json`, **before** `core/boot.js`.
-3. Reload the extension in `about:debugging`.
-
-Add `popup: true` to a setting to also show it in the toolbar popup.
-
-### Avoiding a flash of unstyled YouTube
-
-Settings live in the extension's async storage, so a module starts a beat after the page does — long enough
-for YouTube to paint the thing you are hiding. If your module hides or restyles anything, put those rules in
-a `css` property on the definition, as a string or a function of the settings:
-
-```js
-YTU.register({
-  id: 'my-feature',
-  css: s => (s.hideThing ? '.thing { display: none !important; }' : ''),
-  run(ctx) {
-    const def = this; // boot.js calls def.run(ctx)
-    style.textContent = def.css(ctx.settings); // re-render it yourself on change
-  },
-});
-```
-
-`core/boot.js` injects it at `document_start` using the settings it cached in `localStorage` last time, then
-drops that copy once the real settings arrive and your module has added its own stylesheet.
-
-The options page reads the module list from `manifest.json`, so the new card and its settings appear automatically.
-
-Modules run in YouTube's own page context (like a `@grant none` userscript): they can call YouTube's player API (`#movie_player`) and `fetch` YouTube endpoints with your session. Don't use `innerHTML` in modules — YouTube enforces Trusted Types and it throws; build elements with `createElement`. Always return a cleanup function so the module can be switched off without reloading the page.
-
-## User scripts
-
-Options page → **User scripts** → **Allow user scripts** (one-time Firefox permission, Firefox 136+) → **New script**, then paste a normal userscript. `@name`, `@match`/`@include` and `@run-at` are read from the header. Matches must be on `youtube.com`.
-
-Scripts run in the page context. Available Tampermonkey functions: `GM_getValue`, `GM_setValue`, `GM_deleteValue`, `GM_addStyle`, `GM_log`, `unsafeWindow` (`GM_registerMenuCommand` is accepted but does nothing). Scripts that need `GM_xmlhttpRequest` or other privileged APIs won't work.
-
-Good candidates for turning into a proper module once they've stuck around.
-
-## Layout
-
-```
-manifest.json          module list lives in content_scripts
-background.js          registers user scripts with Firefox
-content/bridge.js      isolated world: forwards saved settings to the page
-core/runtime.js        YTU.register() registry
-core/boot.js           starts/stops/reconfigures modules
-modules/*.js           features
-options/               options page + toolbar popup
-```
+How to run it from source, build a release or add your own feature: see [DEVELOPING.md](DEVELOPING.md). There's also a Tampermonkey-style **User scripts** section in the full settings for your own small scripts.
