@@ -29,6 +29,7 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 Click the **metronome icon** in the player bar and switch it on for the video.
 
 1. Play the song and press `R` on every beat from bar 1, 4–8 times. This sets the tempo and the song's start.
+   Or set it manually: type the BPM in the panel, pause on the song's first beat and click **Here** next to *Bar 1*.
 2. Press `G`: the video jumps to bar 1, counts *1 2 3 4* and starts on the beat.
 
 | Key | Action |
