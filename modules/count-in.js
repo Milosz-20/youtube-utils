@@ -777,15 +777,18 @@ YTU.register({
       const svg = document.createElementNS(NS, 'svg');
       const attrs = { viewBox: '0 0 24 24', width: '24', height: '24', fill: 'none', stroke: '#fff', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
       for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
-      const add = (tag, a) => {
+      const add = (tag, a, parent = svg) => {
         const n = document.createElementNS(NS, tag);
         for (const [k, v] of Object.entries(a)) n.setAttribute(k, v);
-        svg.appendChild(n);
+        parent.appendChild(n);
+        return n;
       };
       add('path', { d: 'M9.2 3h5.6l3.7 18H5.5z' }); // body
       add('path', { d: 'M6.6 16h10.8' });           // base
-      add('path', { d: 'M12 16l5-9', class: 'ytu-ci-arm' }); // pendulum
-      add('circle', { class: 'ytu-ci-weight', cx: '14.8', cy: '11', r: '1.7', fill: '#fff', stroke: 'none' });
+      // Pendulum and its weight in one group, so the weight swings with the arm.
+      const arm = add('g', { class: 'ytu-ci-arm' });
+      add('path', { d: 'M12 16l5-9' }, arm);
+      add('circle', { class: 'ytu-ci-weight', cx: '14.8', cy: '11', r: '1.7', fill: '#fff', stroke: 'none' }, arm);
       return svg;
     }
 
