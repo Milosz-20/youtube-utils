@@ -5,7 +5,7 @@
   const YOUTUBE = 'https://www.youtube.com';
   const $ = id => document.getElementById(id);
   const ui = {
-    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
+    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), zoom: $('zoom'), zoomVal: $('zoomVal'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
     note: $('note'), noteText: $('noteText'), form: $('form'), url: $('url'), grant: $('grant'), err: $('err'), remove: $('remove'),
   };
 
@@ -157,7 +157,7 @@
     ui.grant.hidden = !grant;
     ui.err.textContent = err;
     ui.remove.hidden = !(form && rec.url);
-    for (const b of [ui.track, ui.b1, ui.pin, ui.reset]) b.hidden = true;
+    for (const b of [ui.track, ui.b1, ui.pin, ui.reset, ui.zoom]) b.hidden = true;
     ui.status.textContent = '';
     if (form) {
       ui.url.value = rec.url || '';
@@ -195,7 +195,7 @@
     ui.track.replaceChildren(...got.score.tracks.map((t, i) => new Option(t.name || `Track ${i + 1}`, String(i))));
     if (!(rec.track >= 0 && rec.track < got.score.tracks.length)) rec.track = defaultTrack(got);
     ui.track.value = String(rec.track);
-    for (const b of [ui.track, ui.b1, ui.pin, ui.reset]) b.hidden = false;
+    for (const b of [ui.track, ui.b1, ui.pin, ui.reset, ui.zoom]) b.hidden = false;
     showTrack(got.score.tracks[rec.track], true);
   }
 
@@ -231,6 +231,32 @@
     load();
   });
   ui.remove.addEventListener('click', () => { rec = {}; saveRec(); showForm(); });
+  // Size of the tab, the same for every video.
+  const ZOOMS = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+  function setZoom(z, save = true) {
+    const scale = Math.min(ZOOMS[ZOOMS.length - 1], Math.max(ZOOMS[0], z));
+    ui.zoomVal.textContent = Math.round(scale * 100) + '%';
+    if (save) browser.storage.local.set({ tabZoom: scale });
+    if (api.settings.display.scale === scale) return;
+    api.settings.display.scale = scale;
+    api.updateSettings();
+    if (loaded) api.render();
+  }
+  function stepZoom(dir) {
+    const now = api.settings.display.scale;
+    const next = dir > 0 ? ZOOMS.find(z => z > now + 1e-6) : [...ZOOMS].reverse().find(z => z < now - 1e-6);
+    if (next != null) setZoom(next);
+  }
+  $('zoomOut').addEventListener('click', () => stepZoom(-1));
+  $('zoomIn').addEventListener('click', () => stepZoom(1));
+  document.querySelector('main').addEventListener('wheel', e => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    stepZoom(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+  setZoom(api.settings.display.scale, false);
+  browser.storage.local.get('tabZoom').then(got => { if (got.tabZoom) setZoom(got.tabZoom, false); });
+
   ui.edit.addEventListener('click', () => { loadId++; loaded = null; showForm(); });
   ui.grant.addEventListener('click', async () => {
     if (await browser.permissions.request({ origins: Songsterr.ORIGINS })) load();

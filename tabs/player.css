@@ -16,9 +16,11 @@ button, select {
 }
 button:hover, select:hover { background: rgba(255, 255, 255, .2); }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 1px; }
-select { max-width: 180px; }
+select { max-width: 140px; }
 .b1 { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; height: 26px; padding-left: 10px; border-radius: 13px; background: rgba(255, 255, 255, .12); font-size: 12px; }
 .b1 button.icon { background: none; }
+#zoom { padding-left: 0; }
+.zoom-val { min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
 .b1 input {
   width: 62px; height: 22px; padding: 0 4px; border: none; border-radius: 6px; background: rgba(0, 0, 0, .35);
   color: #fff; font: 400 12px Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; text-align: center;
