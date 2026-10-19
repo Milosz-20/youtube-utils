@@ -259,8 +259,6 @@ YTU.register({
       } else if (m.type === 'ytu-tp:bar1') {
         if (videoId) setBar1(videoId, m.ms);
         sendVideo();
-      } else if (m.type === 'ytu-tp:rate') {
-        v.playbackRate = m.rate;
       }
     });
 

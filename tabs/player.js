@@ -39,7 +39,8 @@
   const handler = {
     get backingTrackDuration() { return video.duration; },
     get playbackRate() { return video.rate; },
-    set playbackRate(value) { if (value !== video.rate) post({ type: 'ytu-tp:rate', rate: value }); },
+    // The speed is YouTube's (and Precise playback speed's) alone; the tab only follows it.
+    set playbackRate(_) { /* never sent back to the video */ },
     get masterVolume() { return 1; },
     set masterVolume(_) { /* the video's own volume control stays in charge */ },
     // alphaTab also seeks on its own whenever it reloads the song, changes speed or gets new sync
@@ -265,6 +266,7 @@
     rec.track = Number(ui.track.value);
     saveRec();
     showTrack(loaded.score.tracks[rec.track], false);
+    ui.track.blur(); // so the keys (speed, seeking, G…) reach the video again, not the track list
   });
   ui.bar1.addEventListener('click', () => setBar1(video.ms));
   $('b1Minus').addEventListener('click', () => setBar1(bar1Ms() - 50));
@@ -311,7 +313,9 @@
   window.addEventListener('keydown', e => {
     const t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-    if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    // Held keys repeat for seeking and for Shift + > / < (speed), like on the page itself.
+    const repeats = e.key === 'ArrowLeft' || e.key === 'ArrowRight' || (e.shiftKey && /^(Period|Comma)$/.test(e.code));
+    if (e.repeat && !repeats) return;
     e.preventDefault();
     if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { post({ type: 'ytu-tp:toggle' }); return; }
     const { key, code, shiftKey, ctrlKey, altKey, metaKey } = e;
