@@ -127,7 +127,8 @@ YTU.register({
       .ytu-ci-loopinfo { margin-right: auto; color: rgba(255, 255, 255, .5); font-size: 12px; }
       .ytu-ci-overlay {
         position: absolute; inset: 0; z-index: 59; pointer-events: none;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        /* At the top of the video, clear of the tab player's window, which usually sits lower down. */
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 18px; padding-top: 28px;
       }
       .ytu-ci-num { min-height: 110px; font: 700 110px/1 Roboto, Arial, sans-serif; color: #fff; text-shadow: 0 2px 16px rgba(0, 0, 0, .7); }
       .ytu-ci-dots { display: flex; gap: 12px; }
