@@ -9,6 +9,11 @@ body {
   display: flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 8px;
   background: #1e1e1e; color: #f1f1f1;
 }
+.speed {
+  flex: none; padding: 4px 8px; border-radius: 13px; font: 500 12px/1 Roboto, Arial, sans-serif;
+  font-variant-numeric: tabular-nums; color: #f1f1f1; transition: background .3s;
+}
+.speed.flash { background: #3ea6ff; color: #0f0f0f; transition: none; }
 .status { flex: 1; min-width: 0; margin-right: auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: rgba(255, 255, 255, .6); font-size: 12px; }
 button, select {
   flex: none; white-space: nowrap; height: 26px; padding: 0 10px; border: none; border-radius: 13px; cursor: pointer;

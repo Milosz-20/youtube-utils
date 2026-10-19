@@ -50,7 +50,7 @@ Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player
 
 - Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
 - Bar 1 is the same one Practice uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
-- Click a note to jump the video there. Speed changes and seeks are followed.
+- Click a note to jump the video there. Speed changes and seeks are followed; the current speed shows in the window's bar and lights up when it changes.
 - Make the tab bigger or smaller with **− / +** next to the percentage, or Ctrl + mouse wheel over it. Drag the window by its title bar and resize it from its sides or bottom corners; **□** (or a double-click on the title bar) makes it fill the browser window.
 
 ## Troubleshooting

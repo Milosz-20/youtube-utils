@@ -5,7 +5,7 @@
   const YOUTUBE = 'https://www.youtube.com';
   const $ = id => document.getElementById(id);
   const ui = {
-    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), zoom: $('zoom'), zoomVal: $('zoomVal'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
+    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), zoom: $('zoom'), zoomVal: $('zoomVal'), speed: $('speed'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
     note: $('note'), noteText: $('noteText'), form: $('form'), url: $('url'), grant: $('grant'), err: $('err'), remove: $('remove'),
   };
 
@@ -287,6 +287,15 @@
   ui.pin.addEventListener('click', pinBar);
   ui.reset.addEventListener('click', () => { rec.sync = (rec.sync || []).filter(isBar1); saveRec(); applySync(); refreshStatus(); });
 
+  // The speed, here too: the window covers the indicator on the video. It lights up when it changes.
+  let speedTimer = 0;
+  function showSpeed(rate) {
+    ui.speed.textContent = rate.toFixed(2) + '×';
+    ui.speed.classList.add('flash');
+    clearTimeout(speedTimer);
+    speedTimer = setTimeout(() => ui.speed.classList.remove('flash'), 1000);
+  }
+
   // -------------------------------------------------------------- messages from the YouTube page
   window.addEventListener('message', async e => {
     if (e.source !== window.parent || e.origin !== YOUTUBE || !e.data) return;
@@ -303,6 +312,7 @@
     } else if (m.type === 'ytu-tp:time') {
       const started = video.paused && !m.paused;
       const stopped = !video.paused && m.paused;
+      if (m.rate !== video.rate) showSpeed(m.rate);
       Object.assign(video, { ms: m.ms, paused: m.paused, rate: m.rate, duration: m.duration });
       if (!loaded) return;
       if (api.playbackSpeed !== m.rate) api.playbackSpeed = m.rate;
