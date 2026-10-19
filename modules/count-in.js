@@ -1,8 +1,8 @@
-// Count-in: metronome clicks "1 2 3 4" at the song's own tempo, then the video starts right on the beat.
+// Practice: tempo, metronome, count-in, A-B loop and the tab player switch. Count-in: metronome clicks "1 2 3 4" at the song's own tempo, then the video starts right on the beat.
 YTU.register({
   id: 'count-in',
-  name: 'Count-in & loop',
-  description: 'For playing along: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Shift+R keeps the clicks going along with the video, as a metronome. [ and ] mark a passage, \\ loops it, optionally with a count-in before every repeat. Every bar of the count-in starts with a higher click. Follows the playback speed and remembers each video.',
+  name: 'Practice',
+  description: 'For playing along, from the metronome icon in the player bar: counts "1 2 3 4" with metronome clicks, then starts the video right on the beat. While the song plays, press R on every beat, starting on bar 1 — that sets the tempo and where bar 1 is. G counts in from bar 1, Shift+G from the bar you\'re at. Shift+R keeps the clicks going along with the video, as a metronome. [ and ] mark a passage, \\ loops it, optionally with a count-in before every repeat. Every bar of the count-in starts with a higher click. Its Tabs switch shows the tab player (H) for the video. Follows the playback speed and remembers each video.',
   settings: {
     beats: { type: 'number', label: 'Clicks before the song starts', default: 4, min: 1, max: 16, step: 1 },
     perBar: { type: 'number', label: 'Beats per bar (the first of each bar gets the higher click)', default: 4, min: 1, max: 12, step: 1 },
@@ -127,7 +127,8 @@ YTU.register({
       .ytu-ci-loopinfo { margin-right: auto; color: rgba(255, 255, 255, .5); font-size: 12px; }
       .ytu-ci-overlay {
         position: absolute; inset: 0; z-index: 59; pointer-events: none;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        /* At the top of the video, clear of the tab player's window, which usually sits lower down. */
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 18px; padding-top: 28px;
       }
       .ytu-ci-num { min-height: 110px; font: 700 110px/1 Roboto, Arial, sans-serif; color: #fff; text-shadow: 0 2px 16px rgba(0, 0, 0, .7); }
       .ytu-ci-dots { display: flex; gap: 12px; }
@@ -795,7 +796,7 @@ YTU.register({
     function buildButton() {
       const b = el('button', 'ytp-button ytu-ci-btn');
       b.type = 'button';
-      b.setAttribute('aria-label', 'Count-in');
+      b.setAttribute('aria-label', 'Practice');
       b.appendChild(metronomeIcon());
       b.addEventListener('click', e => { e.stopPropagation(); togglePanel(); });
       return b;
@@ -836,18 +837,18 @@ YTU.register({
       // Header: title, on/off for this video, close.
       const head = el('div', 'ytu-ci-head');
       const sw = el('label', 'ytu-ci-switch');
-      sw.title = 'Count-in for this video';
+      sw.title = 'Practice tools for this video';
       ui.on = el('input');
       ui.on.type = 'checkbox';
-      ui.on.setAttribute('aria-label', 'Count-in for this video');
+      ui.on.setAttribute('aria-label', 'Practice tools for this video');
       ui.on.addEventListener('change', () => {
         song.enabled = ui.on.checked;
         if (!song.enabled) { abort(); taps = []; }
         save();
       });
       sw.append(ui.on, el('span'));
-      head.append(el('span', 'ytu-ci-title', 'Count-in'), sw, btnEl('\u00d7', 'Close', closePanel, 'ytu-ci-x'));
-      const offNote = el('div', 'ytu-ci-off-note', 'Off for this video, so R and G do nothing here. Switch it on to count in.');
+      head.append(el('span', 'ytu-ci-title', 'Practice'), sw, btnEl('\u00d7', 'Close', closePanel, 'ytu-ci-x'));
+      const offNote = el('div', 'ytu-ci-off-note', 'Off for this video, so R, G and H do nothing here. Switch it on to practise.');
 
       // Tempo: the number itself is editable; the round buttons nudge it by one.
       const setBpm = b => { if (b) { song.bpm = Math.round(Math.min(300, Math.max(30, b)) * 100) / 100; save(); } };
@@ -893,6 +894,17 @@ YTU.register({
       const metroRow = el('div', 'ytu-ci-row');
       metroRow.append(el('span', 'ytu-ci-label', 'Metronome'), el('span', 'ytu-ci-key', '\u21e7R'), metroSwitch);
 
+      // The tab player (modules/tab-player.js) reads this and shows its button and H only when it's on.
+      ui.tabs = el('input');
+      ui.tabs.type = 'checkbox';
+      ui.tabs.setAttribute('aria-label', 'Tab player for this video');
+      ui.tabs.addEventListener('change', () => { song.tabs = ui.tabs.checked; save(); });
+      const tabsSwitch = el('label', 'ytu-ci-switch');
+      tabsSwitch.title = 'Show the tab button in the player bar, and H, for this video';
+      tabsSwitch.append(ui.tabs, el('span'));
+      const tabsRow = el('div', 'ytu-ci-row');
+      tabsRow.append(el('span', 'ytu-ci-label', 'Tabs'), el('span', 'ytu-ci-key', 'H'), tabsSwitch);
+
       const clicks = stepper('Clicks before the song', beatsOf, n => { song.beats = n; save(); }, 1, 16);
       const bar = stepper('Beats per bar', perBarOf, n => { song.perBar = n; save(); }, 1, 12);
       ui.beats = clicks.val;
@@ -904,7 +916,7 @@ YTU.register({
 
       // Sound: a dropdown (drums first), heard as soon as you pick one; ▶ plays it again.
       ui.sound = el('select', 'ytu-ci-sound');
-      ui.sound.setAttribute('aria-label', 'Count-in sound');
+      ui.sound.setAttribute('aria-label', 'Click sound');
       const groups = {};
       for (const [id, snd] of Object.entries(SOUNDS)) {
         const name = snd.group || 'Other';
@@ -976,7 +988,7 @@ YTU.register({
           btnEl('\u00bd', 'Half the tempo', () => setBpm(song.bpm / 2)),
           btnEl('\u00d72', 'Double the tempo', () => setBpm(song.bpm * 2))),
         tempo, ui.tap, ui.note),
-        section(null, metroRow, barRow, clicksRow, barLenRow, soundRow),
+        section(null, tabsRow, metroRow, barRow, clicksRow, barLenRow, soundRow),
         section(caption('Loop', el('span', 'ytu-ci-key', '\\'), loopSwitch), la.r, lb.r, infoRow, countRow),
         actions,
       );
@@ -990,7 +1002,7 @@ YTU.register({
         btn.classList.toggle('ytu-ci-set', onHere && !!song.bpm);
         btn.classList.toggle('ytu-ci-disabled', !onHere);
         btn.classList.toggle('ytu-ci-metro', metroOn());
-        btn.title = !onHere ? 'Count-in (off for this video)' : song.bpm ? `Count-in \u00b7 ${fmtBpm(song.bpm)} BPM (G)${song.metronome ? ' \u00b7 metronome on' : ''}` : 'Count-in (G)';
+        btn.title = !onHere ? 'Practice (off for this video)' : song.bpm ? `Practice \u00b7 ${fmtBpm(song.bpm)} BPM (G)${song.metronome ? ' \u00b7 metronome on' : ''}` : 'Practice (G)';
       }
       if (!panel) return;
       ui.on.checked = onHere;
@@ -1001,6 +1013,7 @@ YTU.register({
       ui.start.textContent = song.start != null ? fmtTime(song.start) : 'not set';
       ui.note.textContent = note || (song.bpm ? '' : 'Play the song and tap on every beat, from bar 1.');
       if (document.activeElement !== ui.sound) ui.sound.value = soundId;
+      ui.tabs.checked = !!song.tabs;
       ui.metro.checked = !!song.metronome;
       ui.metro.disabled = !song.bpm;
       const L = song.loop || {};
@@ -1095,6 +1108,14 @@ YTU.register({
     poll();
 
     disposers.push(ctx.onChange(refresh));
+
+    // The tab player's bar 1 is this one; it sets it through here.
+    on(document, 'ytu:set-bar1', e => {
+      if (!e.detail || e.detail.videoId !== videoId) return;
+      e.detail.handled = true;
+      song.start = Math.max(0, e.detail.start);
+      save();
+    });
 
     return () => {
       abort();

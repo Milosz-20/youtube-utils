@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tab</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <header class="bar">
+    <select id="track" title="Track" hidden></select>
+    <span id="status" class="status"></span>
+    <span id="b1" class="b1" title="Where bar 1 starts in the video. Type a time (1:02.35 or 62.35) and press Enter, or nudge it." hidden>
+      Bar 1
+      <button id="b1Minus" type="button" class="icon" title="50 ms earlier">−</button>
+      <input id="b1Time" type="text" inputmode="decimal" aria-label="Bar 1 time" spellcheck="false">
+      <button id="b1Plus" type="button" class="icon" title="50 ms later">+</button>
+      <button id="bar1" type="button" title="Bar 1 starts where the video is now (pause on its first beat, or press it on the beat)">Here</button>
+    </span>
+    <button id="pin" type="button" title="Press on the first beat of the bar the cursor should be in, to fix drift from there on" hidden>Pin bar</button>
+    <button id="reset" type="button" class="icon" title="Forget the sync points after bar 1" hidden>↺</button>
+    <span id="zoom" class="b1" title="Size of the tab (Ctrl + mouse wheel works too)" hidden>
+      <button id="zoomOut" type="button" class="icon" title="Smaller">−</button>
+      <span id="zoomVal" class="zoom-val"></span>
+      <button id="zoomIn" type="button" class="icon" title="Bigger">+</button>
+    </span>
+    <button id="edit" type="button" class="icon" title="Change the Songsterr link">🔗</button>
+  </header>
+  <main>
+    <div id="score"></div>
+    <div id="note" class="note" hidden>
+      <div id="noteText"></div>
+      <form id="form">
+        <input id="url" type="url" placeholder="https://www.songsterr.com/a/wsa/…-tab-s…" aria-label="Songsterr link">
+        <button type="submit" class="primary">Load</button>
+      </form>
+      <button id="grant" type="button" class="primary" hidden>Allow access to Songsterr</button>
+      <div id="err" class="err"></div>
+      <button id="remove" type="button" hidden>Remove the link from this video</button>
+    </div>
+  </main>
+  <script src="../vendor/alphatab/alphaTab.min.js"></script>
+  <script src="../vendor/songsterr-convert.js"></script>
+  <script src="songsterr.js"></script>
+  <script src="player.js"></script>
+</body>
+</html>

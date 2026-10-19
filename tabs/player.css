@@ -1,0 +1,51 @@
+html, body { margin: 0; height: 100%; }
+body {
+  display: flex; flex-direction: column; background: #fff; color: #0f0f0f;
+  font: 400 13px/1.35 Roboto, Arial, sans-serif;
+}
+[hidden] { display: none !important; }
+
+.bar {
+  display: flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 8px;
+  background: #1e1e1e; color: #f1f1f1;
+}
+.status { flex: 1; min-width: 0; margin-right: auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: rgba(255, 255, 255, .6); font-size: 12px; }
+button, select {
+  flex: none; white-space: nowrap; height: 26px; padding: 0 10px; border: none; border-radius: 13px; cursor: pointer;
+  background: rgba(255, 255, 255, .12); color: #f1f1f1; font: 500 12px/1 Roboto, Arial, sans-serif;
+}
+button:hover, select:hover { background: rgba(255, 255, 255, .2); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 1px; }
+select { max-width: 140px; }
+.b1 { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; height: 26px; padding-left: 10px; border-radius: 13px; background: rgba(255, 255, 255, .12); font-size: 12px; }
+.b1 button.icon { background: none; }
+#zoom { padding-left: 0; }
+.zoom-val { min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+.b1 input {
+  width: 62px; height: 22px; padding: 0 4px; border: none; border-radius: 6px; background: rgba(0, 0, 0, .35);
+  color: #fff; font: 400 12px Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; text-align: center;
+}
+select option { background: #1e1e1e; }
+button.icon { width: 26px; padding: 0; font-size: 14px; }
+button.primary { background: #f1f1f1; color: #0f0f0f; }
+button.primary:hover { background: #d9d9d9; }
+
+main { position: relative; flex: 1; min-height: 0; overflow: auto; }
+#score { min-height: 100%; }
+/* alphaTab's playback cursor and the bar it's in. */
+.at-cursor-bar { background: rgba(62, 166, 255, .12); }
+.at-cursor-beat { background: rgba(62, 166, 255, .75); width: 3px; }
+.at-highlight * { fill: #0b7bd6; stroke: #0b7bd6; }
+
+.note {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px; background: #1e1e1e; color: rgba(255, 255, 255, .8); text-align: center;
+}
+.note form { display: flex; gap: 8px; width: 100%; max-width: 460px; }
+.note input {
+  flex: 1; min-width: 0; height: 32px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, .15); border-radius: 16px;
+  background: rgba(0, 0, 0, .3); color: #fff; font: 400 13px Roboto, Arial, sans-serif;
+}
+.note button { height: 32px; border-radius: 16px; }
+.err { color: #ff8a80; font-size: 12px; max-width: 460px; }
+.err:empty { display: none; }
