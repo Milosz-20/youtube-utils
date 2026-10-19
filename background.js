@@ -65,9 +65,13 @@ const fromYouTube = url => /^https:\/\/www\.youtube\.com\//.test(url || '');
 browser.webRequest.onHeadersReceived.addListener(
   details => {
     const parent = (details.frameAncestors && details.frameAncestors[0] && details.frameAncestors[0].url) || details.originUrl;
-    if (!fromYouTube(parent)) return {};
+    const blockers = details.responseHeaders.filter(h => FRAME_BLOCKERS.has(h.name.toLowerCase())).map(h => h.name);
+    // TEMP diagnostics for the Songsterr window; remove once framing works.
+    console.log('[YouTube Utils] songsterr', details.type, details.statusCode, details.url, 'parent:', parent, 'blockers:', blockers);
+    if (details.type !== 'sub_frame' || !fromYouTube(parent)) return {};
     return { responseHeaders: details.responseHeaders.filter(h => !FRAME_BLOCKERS.has(h.name.toLowerCase())) };
   },
-  { urls: ['https://www.songsterr.com/*'], types: ['sub_frame'] },
+  { urls: ['https://www.songsterr.com/*', 'https://songsterr.com/*'] },
   ['blocking', 'responseHeaders'],
 );
+console.log('[YouTube Utils] background ready; webRequest:', !!browser.webRequest);
