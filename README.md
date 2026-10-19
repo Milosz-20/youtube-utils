@@ -4,6 +4,8 @@ Firefox and Chrome extension with YouTube tweaks. Every feature has its own on/o
 
 ## Install
 
+### Firefox
+
 Requires Firefox 140+.
 
 1. Download the `.xpi` from [Releases](../../releases/latest).
@@ -59,7 +61,7 @@ In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nu
 
 ## Tab player
 
-Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player bar and `H` works, for that video only. Click the icon (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Practice's keys keep working while you're clicking around in the tab. The first time, Firefox asks to let the extension read Songsterr.
+Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player bar and `H` works, for that video only. Click the icon (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Practice's keys keep working while you're clicking around in the tab. In Firefox, the first time, it asks to let the extension read Songsterr (Chrome allows it at install).
 
 - Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
 - Bar 1 is the same one Practice uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
@@ -71,7 +73,7 @@ Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player
 
 - Nothing happens: refresh the tab; check the extension is allowed on youtube.com (🧩 icon).
 - No sound: click the page once first; check *Click volume* in settings.
-- "Couldn't load: …" in the popup after an update: reload the extension (`about:debugging` → **Reload**, or reinstall).
+- "Couldn't load: …" in the popup after an update: reload the extension (Firefox: `about:debugging` → **Reload**, or reinstall; Chrome: ↻ on it in `chrome://extensions`).
 
 ## Privacy
 
