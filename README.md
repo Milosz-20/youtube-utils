@@ -35,7 +35,7 @@ Click the **metronome icon** in the player bar and switch *Practice* on for the 
 
 | Key | Action |
 | --- | --- |
-| `R` | Tap tempo |
+| `R` | Tap tempo while the song plays; when paused, open or close the panel |
 | `G` | Count in from bar 1, or from the loop start |
 | `Shift + G` | Count in from the current bar |
 | `Shift + R` | Metronome along with the video |

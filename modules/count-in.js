@@ -207,12 +207,15 @@ YTU.register({
     function tap() {
       const v = video();
       if (!v || isAd() || !isOn()) return;
-      openPanel();
+      // Paused, R opens and closes the panel; while the song plays it taps the tempo (and opens it).
       if (v.paused) {
-        note = 'Play the song first, then tap R on every beat.';
+        if (panel && !panel.hidden) { closePanel(); return; }
+        openPanel();
+        note = 'Play the song, then tap R on every beat.';
         refresh();
         return;
       }
+      openPanel();
       const now = performance.now();
       if (now - lastTap > 2500) taps = [];
       lastTap = now;
