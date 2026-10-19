@@ -5,7 +5,7 @@
   const YOUTUBE = 'https://www.youtube.com';
   const $ = id => document.getElementById(id);
   const ui = {
-    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), zoom: $('zoom'), zoomVal: $('zoomVal'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
+    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), zoom: $('zoom'), zoomVal: $('zoomVal'), speed: $('speed'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
     note: $('note'), noteText: $('noteText'), form: $('form'), url: $('url'), grant: $('grant'), err: $('err'), remove: $('remove'),
   };
 
@@ -39,7 +39,8 @@
   const handler = {
     get backingTrackDuration() { return video.duration; },
     get playbackRate() { return video.rate; },
-    set playbackRate(value) { if (value !== video.rate) post({ type: 'ytu-tp:rate', rate: value }); },
+    // The speed is YouTube's (and Precise playback speed's) alone; the tab only follows it.
+    set playbackRate(_) { /* never sent back to the video */ },
     get masterVolume() { return 1; },
     set masterVolume(_) { /* the video's own volume control stays in charge */ },
     // alphaTab also seeks on its own whenever it reloads the song, changes speed or gets new sync
@@ -261,10 +262,15 @@
   ui.grant.addEventListener('click', async () => {
     if (await browser.permissions.request({ origins: Songsterr.ORIGINS })) load();
   });
+  // Picked with the mouse: hand the keys back. Arrows stay in the list, so you can keep browsing tracks.
+  let trackByKey = false;
+  ui.track.addEventListener('keydown', () => { trackByKey = true; });
+  ui.track.addEventListener('pointerdown', () => { trackByKey = false; });
   ui.track.addEventListener('change', () => {
     rec.track = Number(ui.track.value);
     saveRec();
     showTrack(loaded.score.tracks[rec.track], false);
+    if (!trackByKey) ui.track.blur(); // so the keys (speed, seeking, G…) reach the video again
   });
   ui.bar1.addEventListener('click', () => setBar1(video.ms));
   $('b1Minus').addEventListener('click', () => setBar1(bar1Ms() - 50));
@@ -280,6 +286,15 @@
   });
   ui.pin.addEventListener('click', pinBar);
   ui.reset.addEventListener('click', () => { rec.sync = (rec.sync || []).filter(isBar1); saveRec(); applySync(); refreshStatus(); });
+
+  // The speed, here too: the window covers the indicator on the video. It lights up when it changes.
+  let speedTimer = 0;
+  function showSpeed(rate) {
+    ui.speed.textContent = rate.toFixed(2) + '×';
+    ui.speed.classList.add('flash');
+    clearTimeout(speedTimer);
+    speedTimer = setTimeout(() => ui.speed.classList.remove('flash'), 1000);
+  }
 
   // -------------------------------------------------------------- messages from the YouTube page
   window.addEventListener('message', async e => {
@@ -297,6 +312,7 @@
     } else if (m.type === 'ytu-tp:time') {
       const started = video.paused && !m.paused;
       const stopped = !video.paused && m.paused;
+      if (m.rate !== video.rate) showSpeed(m.rate);
       Object.assign(video, { ms: m.ms, paused: m.paused, rate: m.rate, duration: m.duration });
       if (!loaded) return;
       if (api.playbackSpeed !== m.rate) api.playbackSpeed = m.rate;
@@ -311,7 +327,9 @@
   window.addEventListener('keydown', e => {
     const t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-    if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    // Held keys repeat for seeking and for Shift + > / < (speed), like on the page itself.
+    const repeats = e.key === 'ArrowLeft' || e.key === 'ArrowRight' || (e.shiftKey && (/^(Period|Comma)$/.test(e.code) || ['>', '<', '.', ','].includes(e.key)));
+    if (e.repeat && !repeats) return;
     e.preventDefault();
     if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { post({ type: 'ytu-tp:toggle' }); return; }
     const { key, code, shiftKey, ctrlKey, altKey, metaKey } = e;

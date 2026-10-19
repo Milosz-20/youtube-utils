@@ -207,12 +207,15 @@ YTU.register({
     function tap() {
       const v = video();
       if (!v || isAd() || !isOn()) return;
-      openPanel();
+      // Paused, R opens and closes the panel; while the song plays it taps the tempo (and opens it).
       if (v.paused) {
-        note = 'Play the song first, then tap R on every beat.';
+        if (panel && !panel.hidden) { closePanel(); return; }
+        openPanel();
+        note = 'Play the song, then tap R on every beat.';
         refresh();
         return;
       }
+      openPanel();
       const now = performance.now();
       if (now - lastTap > 2500) taps = [];
       lastTap = now;
@@ -1063,12 +1066,36 @@ YTU.register({
     }, true);
 
     // -------------------------------------------------------------- keys
+    // Space or K while it counts in: changed your mind. Stop the count and leave the video paused,
+    // instead of YouTube starting it. The key's keyup/keypress are swallowed too.
+    let cancelKey = null;
+    function cancelCount() {
+      if (!counting) return false;
+      abort();
+      const v = video();
+      if (v && !v.paused) { const was = ownAction; ownAction = true; v.pause(); ownAction = was; }
+      return true;
+    }
+    on(document, 'ytu:cancel-count', e => { if (e.detail && cancelCount()) e.detail.handled = true; });
     // YouTube reads keys for the whole player before they reach anything inside it, so typing "5"
     // into the tempo field would jump the video to 50%. Stopping them on window in the capture phase
     // runs ahead of YouTube's handler, and the typing itself (the default action) still happens.
     function onKey(e) {
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
+      if (cancelKey && e.key === cancelKey && e.type !== 'keydown') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (e.type === 'keyup') cancelKey = null;
+        return;
+      }
+      if (e.type === 'keydown' && counting && (e.key === ' ' || k === 'k') && !e.ctrlKey && !e.metaKey && !e.altKey && !inTextField(e.target)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        cancelKey = e.key;
+        cancelCount();
+        return;
+      }
       const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || k === 'r' || ['[', ']', '\\'].includes(e.key));
       if (inPanel && !(ours && isOn())) {
         e.stopImmediatePropagation();
