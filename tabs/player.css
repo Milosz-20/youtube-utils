@@ -9,14 +9,20 @@ body {
   display: flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 8px;
   background: #1e1e1e; color: #f1f1f1;
 }
-.status { margin-right: auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: rgba(255, 255, 255, .6); font-size: 12px; }
+.status { flex: 1; min-width: 0; margin-right: auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: rgba(255, 255, 255, .6); font-size: 12px; }
 button, select {
-  height: 26px; padding: 0 10px; border: none; border-radius: 13px; cursor: pointer;
+  flex: none; white-space: nowrap; height: 26px; padding: 0 10px; border: none; border-radius: 13px; cursor: pointer;
   background: rgba(255, 255, 255, .12); color: #f1f1f1; font: 500 12px/1 Roboto, Arial, sans-serif;
 }
 button:hover, select:hover { background: rgba(255, 255, 255, .2); }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #3ea6ff; outline-offset: 1px; }
 select { max-width: 180px; }
+.b1 { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; height: 26px; padding-left: 10px; border-radius: 13px; background: rgba(255, 255, 255, .12); font-size: 12px; }
+.b1 button.icon { background: none; }
+.b1 input {
+  width: 62px; height: 22px; padding: 0 4px; border: none; border-radius: 6px; background: rgba(0, 0, 0, .35);
+  color: #fff; font: 400 12px Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; text-align: center;
+}
 select option { background: #1e1e1e; }
 button.icon { width: 26px; padding: 0; font-size: 14px; }
 button.primary { background: #f1f1f1; color: #0f0f0f; }

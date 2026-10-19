@@ -4,7 +4,7 @@
 YTU.register({
   id: 'tab-player',
   name: 'Tab player',
-  description: 'Attach a Songsterr tab to a video and read it in a floating window you can drag and resize. The extension draws the tab itself, so it shows in Zen and Firefox too. The cursor follows the video at any speed; click a note to jump the video there. Press "Bar 1 is now" on the first beat of bar 1, and "This bar is now" on a later downbeat if the cursor drifts.',
+  description: 'Attach a Songsterr tab to a video and read it in a floating window you can drag and resize. The extension draws the tab itself, so it shows in Zen and Firefox too. The cursor follows the video at any speed; click a note to jump the video there. Bar 1 is shared with Count-in & loop: set it in either place (type it, nudge it, or press Here on the beat). Press "Pin bar" on a later downbeat if the cursor drifts.',
 
   run(ctx) {
     const disposers = [];
@@ -48,14 +48,25 @@ YTU.register({
       return (data && data.video_id) || new URLSearchParams(location.search).get('v');
     }
 
-    // Where Count-in & loop says bar 1 starts, as a first guess until you sync in the tab window.
+    // Bar 1 is Count-in & loop's: the tab window shows and moves that one, so it's set in one place.
+    const SONG = id => 'ytu:count-in:song:' + id;
     function bar1Ms(id) {
       try {
-        const song = JSON.parse(localStorage.getItem('ytu:count-in:song:' + id));
-        return song && song.start != null ? Math.round(song.start * 1000) : 0;
+        const song = JSON.parse(localStorage.getItem(SONG(id)));
+        return song && song.start != null ? Math.round(song.start * 1000) : null;
       } catch {
-        return 0;
+        return null;
       }
+    }
+    function setBar1(id, ms) {
+      const detail = { videoId: id, start: ms / 1000, handled: false };
+      document.dispatchEvent(new CustomEvent('ytu:set-bar1', { detail }));
+      if (detail.handled) return;
+      // Count-in & loop is switched off: keep it in its storage for when it's back.
+      let song = {};
+      try { song = JSON.parse(localStorage.getItem(SONG(id))) || {}; } catch { /* start fresh */ }
+      song.start = detail.start;
+      try { localStorage.setItem(SONG(id), JSON.stringify(song)); } catch { /* storage full/blocked */ }
     }
 
     // content/bridge.js puts the extension's address on the page; this world can't ask for it.
@@ -155,8 +166,10 @@ YTU.register({
     function send(msg) {
       if (frame && ready) frame.contentWindow.postMessage(msg, ORIGIN());
     }
+    let sentBar1;
     function sendVideo() {
-      send({ type: 'ytu-tp:video', videoId, bar1Ms: videoId ? bar1Ms(videoId) : 0 });
+      sentBar1 = videoId ? bar1Ms(videoId) : null;
+      send({ type: 'ytu-tp:video', videoId, bar1Ms: sentBar1 });
     }
     function sendTime() {
       const v = video();
@@ -191,6 +204,9 @@ YTU.register({
         v.play();
       } else if (m.type === 'ytu-tp:pause') {
         v.pause();
+      } else if (m.type === 'ytu-tp:bar1') {
+        if (videoId) setBar1(videoId, m.ms);
+        sendVideo();
       } else if (m.type === 'ytu-tp:rate') {
         v.playbackRate = m.rate;
       }
@@ -253,6 +269,8 @@ YTU.register({
         // The window stays open from video to video if you left it open.
         if (id && win && win.hidden && ctx.storage.get('open', false)) setOpen(true);
         sendVideo();
+      } else if (videoId && ready && bar1Ms(videoId) !== sentBar1) {
+        sendVideo(); // bar 1 moved in Count-in & loop
       }
     }
     const timer = setInterval(poll, 500);

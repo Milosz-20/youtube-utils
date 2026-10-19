@@ -1096,6 +1096,14 @@ YTU.register({
 
     disposers.push(ctx.onChange(refresh));
 
+    // The tab player's bar 1 is this one; it sets it through here.
+    on(document, 'ytu:set-bar1', e => {
+      if (!e.detail || e.detail.videoId !== videoId) return;
+      e.detail.handled = true;
+      song.start = Math.max(0, e.detail.start);
+      save();
+    });
+
     return () => {
       abort();
       clearInterval(timer);

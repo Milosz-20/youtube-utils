@@ -9,9 +9,15 @@
   <header class="bar">
     <select id="track" title="Track" hidden></select>
     <span id="status" class="status"></span>
-    <button id="bar1" type="button" title="Press on the first beat of bar 1 in the video" hidden>Bar 1 is now</button>
-    <button id="pin" type="button" title="Press on the first beat of the bar the cursor is in, to fix drift from here on" hidden>This bar is now</button>
-    <button id="reset" type="button" class="icon" title="Forget the sync for this video" hidden>↺</button>
+    <span id="b1" class="b1" title="Where bar 1 starts in the video. Type a time (1:02.35 or 62.35) and press Enter, or nudge it." hidden>
+      Bar 1
+      <button id="b1Minus" type="button" class="icon" title="50 ms earlier">−</button>
+      <input id="b1Time" type="text" inputmode="decimal" aria-label="Bar 1 time" spellcheck="false">
+      <button id="b1Plus" type="button" class="icon" title="50 ms later">+</button>
+      <button id="bar1" type="button" title="Bar 1 starts where the video is now (pause on its first beat, or press it on the beat)">Here</button>
+    </span>
+    <button id="pin" type="button" title="Press on the first beat of the bar the cursor should be in, to fix drift from there on" hidden>Pin bar</button>
+    <button id="reset" type="button" class="icon" title="Forget the sync points after bar 1" hidden>↺</button>
     <button id="edit" type="button" class="icon" title="Change the Songsterr link">🔗</button>
   </header>
   <main>

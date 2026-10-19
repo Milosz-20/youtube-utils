@@ -5,16 +5,17 @@
   const YOUTUBE = 'https://www.youtube.com';
   const $ = id => document.getElementById(id);
   const ui = {
-    track: $('track'), status: $('status'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
+    track: $('track'), status: $('status'), b1: $('b1'), b1Time: $('b1Time'), bar1: $('bar1'), pin: $('pin'), reset: $('reset'), edit: $('edit'),
     note: $('note'), noteText: $('noteText'), form: $('form'), url: $('url'), grant: $('grant'), err: $('err'), remove: $('remove'),
   };
 
   const post = msg => window.parent.postMessage(msg, YOUTUBE);
 
   // -------------------------------------------------------------- per-video record
-  // { url, track (index into the tab's tracks), sync: alphaTab FlatSyncPoint[] }
+  // { url, track (index into the tab's tracks), sync: alphaTab FlatSyncPoint[] for bars after bar 1,
+  //   plus bar 1 itself only while Count-in & loop has no bar 1 for this video }
   let videoId = null;
-  let bar1Hint = 0; // ms where Count-in & loop says bar 1 starts, used until you set the sync here
+  let bar1Linked = null; // ms where Count-in & loop's bar 1 is; the one place bar 1 is set, when it's set
   let rec = {};
   const key = () => 'tab:' + videoId;
   async function readRec() {
@@ -90,42 +91,62 @@
 
   function applySync() {
     if (!loaded) return;
-    const sync = rec.sync && rec.sync.length
-      ? rec.sync
-      : [{ barIndex: 0, barOccurence: 0, barPosition: 0, millisecondOffset: bar1Hint }];
+    const sync = [bar1Point(bar1Ms()), ...(rec.sync || []).filter(p => !isBar1(p))];
     loaded.score.applyFlatSyncPoints(sync);
     api.updateSyncPoints();
     api.player.output.updatePosition(video.ms);
   }
 
   // Pin the bar the cursor is in (or about to reach) to the video's current time.
-  function pinBar(first) {
+  function pinBar() {
     const bars = playedBars();
     if (!loaded || !bars.length) return;
-    let i = 0;
-    if (!first) {
-      i = barAt(tick);
-      const b = bars[i];
-      // Pressed a little late or a little early, on the downbeat either way.
-      if (tick - b.start > (b.end - b.start) / 2 && i + 1 < bars.length) i++;
-    }
+    let i = barAt(tick);
+    const b = bars[i];
+    // Pressed a little late or a little early, on the downbeat either way.
+    if (tick - b.start > (b.end - b.start) / 2 && i + 1 < bars.length) i++;
+    if (i === 0) { setBar1(video.ms); return; }
     const point = { barIndex: bars[i].masterBar.index, barOccurence: occurrence(i), barPosition: 0, millisecondOffset: video.ms };
     const same = p => p.barIndex === point.barIndex && p.barOccurence === point.barOccurence;
-    rec.sync = first ? [point] : [...(rec.sync || []).filter(p => !same(p)), point];
-    if (!first && !rec.sync.some(p => p.barIndex === 0 && p.barOccurence === 0)) {
-      rec.sync.unshift({ barIndex: 0, barOccurence: 0, barPosition: 0, millisecondOffset: bar1Hint });
-    }
+    rec.sync = [...(rec.sync || []).filter(p => !same(p)), point];
     saveRec();
     applySync();
     refreshStatus();
   }
 
+  // Bar 1 is shared with Count-in & loop: setting it here moves the metronome's bar 1 and the other
+  // way round. The YouTube side writes it there and reports back. Later sync points stay put.
+  const isBar1 = p => p.barIndex === 0 && p.barOccurence === 0;
+  const bar1Point = ms => ({ barIndex: 0, barOccurence: 0, barPosition: 0, millisecondOffset: ms });
+  function bar1Ms() {
+    if (bar1Linked != null) return bar1Linked;
+    const p = (rec.sync || []).find(isBar1); // set here before it was shared
+    return p ? p.millisecondOffset : 0;
+  }
+  function setBar1(ms) {
+    bar1Linked = Math.max(0, Math.round(ms));
+    post({ type: 'ytu-tp:bar1', ms: bar1Linked });
+    applySync();
+    refreshStatus();
+  }
+  const fmtTime = ms => {
+    const t = ms / 1000;
+    const m = Math.floor(t / 60);
+    return m + ':' + (t - m * 60).toFixed(2).padStart(5, '0');
+  };
+  // "1:02.35", "62.35" or "62,35".
+  function parseTime(text) {
+    const m = /^\s*(?:(\d+):)?(\d+(?:[.,]\d*)?)\s*$/.exec(text);
+    return m ? ((Number(m[1]) || 0) * 60 + Number(m[2].replace(',', '.'))) * 1000 : null;
+  }
+
   function refreshStatus() {
     if (!loaded) return;
+    if (document.activeElement !== ui.b1Time) ui.b1Time.value = fmtTime(bar1Ms());
     const bars = playedBars();
     const bar = bars.length ? bars[barAt(tick)].masterBar.index + 1 : 1;
-    const pins = (rec.sync || []).length;
-    ui.status.textContent = `Bar ${bar} · ${pins ? `${pins} sync point${pins > 1 ? 's' : ''}` : 'not synced yet'}`;
+    const pins = (rec.sync || []).filter(p => !isBar1(p)).length;
+    ui.status.textContent = `Bar ${bar}${pins ? ` · ${pins} more sync point${pins > 1 ? 's' : ''}` : ''}`;
   }
 
   // -------------------------------------------------------------- showing a tab
@@ -136,7 +157,7 @@
     ui.grant.hidden = !grant;
     ui.err.textContent = err;
     ui.remove.hidden = !(form && rec.url);
-    for (const b of [ui.track, ui.bar1, ui.pin, ui.reset]) b.hidden = true;
+    for (const b of [ui.track, ui.b1, ui.pin, ui.reset]) b.hidden = true;
     ui.status.textContent = '';
     if (form) {
       ui.url.value = rec.url || '';
@@ -174,7 +195,7 @@
     ui.track.replaceChildren(...got.score.tracks.map((t, i) => new Option(t.name || `Track ${i + 1}`, String(i))));
     if (!(rec.track >= 0 && rec.track < got.score.tracks.length)) rec.track = defaultTrack(got);
     ui.track.value = String(rec.track);
-    for (const b of [ui.track, ui.bar1, ui.pin, ui.reset]) b.hidden = false;
+    for (const b of [ui.track, ui.b1, ui.pin, ui.reset]) b.hidden = false;
     showTrack(got.score.tracks[rec.track], true);
   }
 
@@ -219,17 +240,31 @@
     saveRec();
     showTrack(loaded.score.tracks[rec.track], false);
   });
-  ui.bar1.addEventListener('click', () => pinBar(true));
-  ui.pin.addEventListener('click', () => pinBar(false));
-  ui.reset.addEventListener('click', () => { delete rec.sync; saveRec(); applySync(); refreshStatus(); });
+  ui.bar1.addEventListener('click', () => setBar1(video.ms));
+  $('b1Minus').addEventListener('click', () => setBar1(bar1Ms() - 50));
+  $('b1Plus').addEventListener('click', () => setBar1(bar1Ms() + 50));
+  ui.b1Time.addEventListener('keydown', e => {
+    if (e.key === 'Enter') ui.b1Time.blur();
+    else if (e.key === 'Escape') { ui.b1Time.value = fmtTime(bar1Ms()); ui.b1Time.blur(); }
+  });
+  ui.b1Time.addEventListener('change', () => {
+    const ms = parseTime(ui.b1Time.value);
+    if (ms == null) ui.b1Time.value = fmtTime(bar1Ms());
+    else setBar1(ms);
+  });
+  ui.pin.addEventListener('click', pinBar);
+  ui.reset.addEventListener('click', () => { rec.sync = (rec.sync || []).filter(isBar1); saveRec(); applySync(); refreshStatus(); });
 
   // -------------------------------------------------------------- messages from the YouTube page
   window.addEventListener('message', async e => {
     if (e.source !== window.parent || e.origin !== YOUTUBE || !e.data) return;
     const m = e.data;
     if (m.type === 'ytu-tp:video') {
-      bar1Hint = m.bar1Ms || 0;
-      if (m.videoId === videoId) return;
+      if (m.videoId === videoId) {
+        if (m.bar1Ms !== bar1Linked) { bar1Linked = m.bar1Ms; applySync(); refreshStatus(); }
+        return;
+      }
+      bar1Linked = m.bar1Ms;
       videoId = m.videoId;
       rec = videoId ? await readRec() : {};
       load();
