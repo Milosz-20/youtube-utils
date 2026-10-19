@@ -1,7 +1,7 @@
 ﻿{
   "manifest_version": 3,
   "name": "YouTube Utils",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "YouTube tweaks: Shorts filter, count-in, metronome and A-B loop for practice, Songsterr tabs next to the video, SponsorBlock, quality and speed controls.",
   "browser_specific_settings": {
     "gecko": {
@@ -16,8 +16,10 @@
     }
   },
   "icons": {
-    "48": "icons/icon.svg",
-    "96": "icons/icon.svg"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
   "permissions": ["storage"],
   "optional_permissions": ["userScripts"],
@@ -28,11 +30,15 @@
     "https://d3d3l6a6rcgkaf.cloudfront.net/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "service_worker": "background.js"
   },
   "action": {
     "default_title": "YouTube Utils",
-    "default_icon": "icons/icon.svg",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
     "default_popup": "options/options.html?popup=1"
   },
   "options_ui": {

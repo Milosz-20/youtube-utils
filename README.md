@@ -1,8 +1,10 @@
 # YouTube Utils
 
-Firefox extension with YouTube tweaks. Every feature has its own on/off switch in the toolbar popup.
+Firefox and Chrome extension with YouTube tweaks. Every feature has its own on/off switch in the toolbar popup.
 
 ## Install
+
+### Firefox
 
 Requires Firefox 140+.
 
@@ -11,6 +13,17 @@ Requires Firefox 140+.
 3. Refresh open YouTube tabs.
 
 To update, install the newer `.xpi` the same way. Settings are kept.
+
+### Chrome
+
+Requires Chrome 120+ (or another Chromium browser: Edge, Brave, Opera…).
+
+1. Download the source (the `.zip` from the release, or **Code → Download ZIP**) and unpack it.
+2. Open `chrome://extensions`, switch on **Developer mode** (top right).
+3. **Load unpacked** → pick the unpacked folder (the one with `manifest.json`). It stays installed after restarts.
+4. Refresh open YouTube tabs.
+
+To update, replace the folder's contents and press ↻ on the extension in `chrome://extensions`. User scripts also need **Allow User Scripts** switched on in the extension's details.
 
 ## Features
 
@@ -48,7 +61,7 @@ In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nu
 
 ## Tab player
 
-Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player bar and `H` works, for that video only. Click the icon (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Practice's keys keep working while you're clicking around in the tab. The first time, Firefox asks to let the extension read Songsterr.
+Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player bar and `H` works, for that video only. Click the icon (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Practice's keys keep working while you're clicking around in the tab. In Firefox, the first time, it asks to let the extension read Songsterr (Chrome allows it at install).
 
 - Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
 - Bar 1 is the same one Practice uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
@@ -60,7 +73,7 @@ Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player
 
 - Nothing happens: refresh the tab; check the extension is allowed on youtube.com (🧩 icon).
 - No sound: click the page once first; check *Click volume* in settings.
-- "Couldn't load: …" in the popup after an update: reload the extension (`about:debugging` → **Reload**, or reinstall).
+- "Couldn't load: …" in the popup after an update: reload the extension (Firefox: `about:debugging` → **Reload**, or reinstall; Chrome: ↻ on it in `chrome://extensions`).
 
 ## Privacy
 

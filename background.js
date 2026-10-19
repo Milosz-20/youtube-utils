@@ -1,4 +1,7 @@
-// Keeps the user scripts saved in the options page registered with Firefox's userScripts API.
+// Keeps the user scripts saved in the options page registered with the browser's userScripts API.
+
+// Chrome has only `chrome`; Firefox has both. The rest of the code uses `browser`.
+if (typeof browser === 'undefined') globalThis.browser = chrome;
 
 const RUN_AT = { 'document-start': 'document_start', 'document-end': 'document_end', 'document-idle': 'document_idle' };
 
@@ -53,6 +56,9 @@ browser.permissions.onAdded.addListener(syncUserScripts);
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.userScripts) syncUserScripts();
 });
-browser.runtime.onMessage.addListener(msg => {
-  if (msg && msg.type === 'sync-user-scripts') return syncUserScripts().then(() => true);
+// sendResponse and `return true` rather than a returned promise, which Chrome doesn't take.
+browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || msg.type !== 'sync-user-scripts') return false;
+  syncUserScripts().then(() => sendResponse(true), () => sendResponse(false));
+  return true;
 });
