@@ -219,16 +219,24 @@ YTU.register({
       sentBar1 = videoId ? bar1Ms(videoId) : null;
       send({ type: 'ytu-tp:video', videoId, bar1Ms: sentBar1 });
     }
+    // While an ad plays, the <video> is the ad: the tab stays where the song was, paused, until it's back.
+    const isAd = () => { const p = player(); return !!(p && p.classList.contains('ad-showing')); };
+    let lastTime = null;
     function sendTime() {
       const v = video();
       if (!v) return;
-      send({
+      if (isAd()) {
+        if (lastTime) send({ ...lastTime, paused: true });
+        return;
+      }
+      lastTime = {
         type: 'ytu-tp:time',
         ms: v.currentTime * 1000,
         paused: v.paused,
         rate: v.playbackRate,
         duration: (v.duration || 0) * 1000,
-      });
+      };
+      send(lastTime);
     }
     const timeTimer = setInterval(() => { if (isOpen()) sendTime(); }, 50);
     disposers.push(() => clearInterval(timeTimer));
@@ -248,8 +256,8 @@ YTU.register({
         setOpen(false);
       } else if (m.type === 'ytu-tp:key') {
         pageKey(m);
-      } else if (!v) {
-        return;
+      } else if (!v || isAd()) {
+        return; // no video, or it's an ad: clicks in the tab must not seek, play or pause it
       } else if (m.type === 'ytu-tp:seek') {
         v.currentTime = Math.max(0, m.ms / 1000);
       } else if (m.type === 'ytu-tp:play') {
@@ -347,6 +355,7 @@ YTU.register({
       ensureUi();
       if (id !== videoId || enabled !== was) {
         videoId = id;
+        lastTime = null;
         // The window stays open from video to video, and when switched back on, if you left it open.
         if (enabled && win && win.hidden && ctx.storage.get('open', false)) setOpen(true);
         sendVideo();
