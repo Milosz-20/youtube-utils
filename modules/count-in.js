@@ -1066,9 +1066,33 @@ YTU.register({
     // YouTube reads keys for the whole player before they reach anything inside it, so typing "5"
     // into the tempo field would jump the video to 50%. Stopping them on window in the capture phase
     // runs ahead of YouTube's handler, and the typing itself (the default action) still happens.
+    // Space or K while it counts in: changed your mind. Stop the count and leave the video paused,
+    // instead of YouTube starting it. The key's keyup/keypress are swallowed too.
+    let cancelKey = null;
+    function cancelCount() {
+      if (!counting) return false;
+      abort();
+      const v = video();
+      if (v && !v.paused) { const was = ownAction; ownAction = true; v.pause(); ownAction = was; }
+      return true;
+    }
+    on(document, 'ytu:cancel-count', e => { if (e.detail && cancelCount()) e.detail.handled = true; });
     function onKey(e) {
       const inPanel = !!panel && panel.contains(e.target);
       const k = (e.key || '').toLowerCase();
+      if (cancelKey && e.key === cancelKey && e.type !== 'keydown') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (e.type === 'keyup') cancelKey = null;
+        return;
+      }
+      if (e.type === 'keydown' && counting && (e.key === ' ' || k === 'k') && !e.ctrlKey && !e.metaKey && !e.altKey && !inTextField(e.target)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        cancelKey = e.key;
+        cancelCount();
+        return;
+      }
       const ours = e.type === 'keydown' && !e.ctrlKey && !e.metaKey && !e.altKey && (k === 'g' || k === 'r' || ['[', ']', '\\'].includes(e.key));
       if (inPanel && !(ours && isOn())) {
         e.stopImmediatePropagation();

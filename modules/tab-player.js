@@ -279,7 +279,12 @@ YTU.register({
       if (!v) return;
       const k = m.key.length === 1 ? m.key.toLowerCase() : m.key;
       const plain = !m.ctrlKey && !m.metaKey && !m.altKey && !m.shiftKey;
-      if (plain && (k === ' ' || k === 'k')) { if (v.paused) v.play(); else v.pause(); return; }
+      if (plain && (k === ' ' || k === 'k')) {
+        const detail = { handled: false }; // Practice cancels a running count-in instead
+        document.dispatchEvent(new CustomEvent('ytu:cancel-count', { detail }));
+        if (!detail.handled) { if (v.paused) v.play(); else v.pause(); }
+        return;
+      }
       const seek = plain && { arrowleft: -5, arrowright: 5, j: -10, l: 10 }[k.toLowerCase()];
       if (seek) { v.currentTime = Math.max(0, v.currentTime + seek); return; }
       const ev = new KeyboardEvent('keydown', { ...m, bubbles: true, cancelable: true });
