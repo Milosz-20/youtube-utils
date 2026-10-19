@@ -30,6 +30,12 @@
     "default_icon": "icons/icon.svg",
     "default_popup": "options/options.html?popup=1"
   },
+  "sidebar_action": {
+    "default_title": "Songsterr tab",
+    "default_panel": "sidebar/tab.html",
+    "default_icon": "icons/icon.svg",
+    "open_at_install": false
+  },
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
