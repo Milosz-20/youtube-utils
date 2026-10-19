@@ -23,7 +23,6 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 | **SponsorBlock** | Skips sponsor segments automatically or shows a Skip button. |
 | **Count-in & loop** | Count-in, metronome and A–B loop for playing along. See below. |
 | **Tab player** | A Songsterr tab next to the video, drawn by the extension, with the cursor following the video. See below. |
-| **Songsterr tabs** | The song's Songsterr tab in a window next to the video, following along bar by bar. See below. |
 | **Block Shift + ?** | Disables YouTube's shortcuts overlay. |
 
 ## Count-in & loop
@@ -45,13 +44,14 @@ Click the **metronome icon** in the player bar and switch it on for the video.
 
 In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nudge loop ends (‹ ›, Shift = 10 ms), **Snap to bars**, **Count in every repeat**. Saved per video.
 
-## Songsterr tabs
+## Tab player
 
-1. Click the **tab icon** in the player bar, paste the song's Songsterr link and press **Save**. The link is remembered for that video, and the tab opens in a window of its own showing only the tab. Place it next to YouTube however suits you.
-2. Next time, the tab icon opens that window straight away. The small panel on YouTube can be dragged by its title bar; **×** closes both.
-3. Set the tempo and bar 1 in *Count-in & loop* (above). From then on the tab's cursor moves bar by bar with the video: at any speed, after seeking, and around the loop.
+Click the **tab icon** in the player bar (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Count-in's keys keep working while you're clicking around in the tab. The first time, Firefox asks to let the extension read Songsterr.
 
-If the tab has bars before the song's bar 1 that the video doesn't (or the other way round), shift it with **− / +** in the title bar. The tab gets its own window because Songsterr refuses to be shown inside other pages, and Zen enforces that even for extensions.
+- Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
+- Bar 1 is the same one Count-in & loop uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
+- Click a note to jump the video there. Speed changes and seeks are followed.
+- Make the tab bigger or smaller with **− / +** next to the percentage, or Ctrl + mouse wheel over it. Drag the window by its title bar and resize it from its sides or bottom corners; **□** (or a double-click on the title bar) makes it fill the browser window.
 
 ## Troubleshooting
 
@@ -63,12 +63,3 @@ If the tab has bars before the song's bar 1 that the video doesn't (or the other
 No data is collected. SponsorBlock receives only a 4-character hash prefix of the video ID.
 
 Development: [DEVELOPING.md](DEVELOPING.md)
-
-## Tab player
-
-Click the **tab icon** in the player bar (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Count-in's keys keep working while you're clicking around in the tab. The first time, Firefox asks to let the extension read Songsterr.
-
-- Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
-- Bar 1 is the same one Count-in & loop uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
-- Click a note to jump the video there. Speed changes and seeks are followed.
-- Make the tab bigger or smaller with **− / +** next to the percentage, or Ctrl + mouse wheel over it. Drag the window by its title bar and resize it from its sides or bottom corners; **□** (or a double-click on the title bar) makes it fill the browser window.

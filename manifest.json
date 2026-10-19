@@ -62,18 +62,10 @@
         "modules/sponsorblock.js",
         "modules/count-in.js",
         "modules/tab-player.js",
-        "modules/songsterr.js",
         "modules/block-shortcuts-help.js",
         "core/boot.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": ["*://www.songsterr.com/*"],
-      "js": ["content/songsterr-frame.js"],
-      "run_at": "document_start",
-      "all_frames": true,
       "world": "MAIN"
     }
   ]
