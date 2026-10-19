@@ -61,14 +61,16 @@ browser.runtime.onMessage.addListener(msg => {
 // would leave the Songsterr tabs window on YouTube with an error page. Drop those two headers, but
 // only for Songsterr pages loaded as a frame of a YouTube page.
 const FRAME_BLOCKERS = new Set(['x-frame-options', 'content-security-policy']);
-const fromYouTube = url => /^https:\/\/www\.youtube\.com\//.test(url || '');
+const OWN_PAGES = browser.runtime.getURL('');
+// The tab can be framed by YouTube itself or by this extension's own sidebar page.
+const fromHost = url => /^https:\/\/www\.youtube\.com\//.test(url || '') || (url || '').startsWith(OWN_PAGES);
 browser.webRequest.onHeadersReceived.addListener(
   details => {
     const parent = (details.frameAncestors && details.frameAncestors[0] && details.frameAncestors[0].url) || details.originUrl;
     const blockers = details.responseHeaders.filter(h => FRAME_BLOCKERS.has(h.name.toLowerCase())).map(h => h.name);
     // TEMP diagnostics for the Songsterr window; remove once framing works.
     console.log('[YouTube Utils] songsterr', details.type, details.statusCode, details.url, 'parent:', parent, 'blockers:', blockers);
-    if (details.type !== 'sub_frame' || !fromYouTube(parent)) return {};
+    if (details.type !== 'sub_frame' || !fromHost(parent)) return {};
     return { responseHeaders: details.responseHeaders.filter(h => !FRAME_BLOCKERS.has(h.name.toLowerCase())) };
   },
   { urls: ['https://www.songsterr.com/*', 'https://songsterr.com/*'] },
