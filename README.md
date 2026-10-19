@@ -16,7 +16,7 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 
 ### Chrome
 
-Requires Chrome 120+ (or another Chromium browser: Edge, Brave, Opera…).
+Requires Chrome 121+ (or another browser built on Chromium 121+: Edge, Brave, Opera…).
 
 1. Download the source (the `.zip` from the release, or **Code → Download ZIP**) and unpack it.
 2. Open `chrome://extensions`, switch on **Developer mode** (top right).
