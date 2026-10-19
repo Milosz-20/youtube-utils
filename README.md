@@ -22,7 +22,7 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 | **Precise playback speed** | `Shift + >` / `Shift + <` change speed in 0.05× steps. |
 | **SponsorBlock** | Skips sponsor segments automatically or shows a Skip button. |
 | **Practice** | Tempo, count-in, metronome, A–B loop and the tab switch for playing along. See below. |
-| **Tab player** | A Songsterr tab next to the video, drawn by the extension, with the cursor following the video. See below. |
+| **Tab player** | A Songsterr tab in a window over the video, drawn by the extension, with the cursor following the video. See below. |
 | **Block Shift + ?** | Disables YouTube's shortcuts overlay. |
 
 ## Practice
@@ -36,13 +36,15 @@ Click the **metronome icon** in the player bar and switch *Practice* on for the 
 | Key | Action |
 | --- | --- |
 | `R` | Tap tempo while the song plays; when paused, open or close the panel |
-| `G` | Count in from bar 1, or from the loop start |
+| `G` | Count in from bar 1, or from the loop start while the loop is on |
 | `Shift + G` | Count in from the current bar |
+| `Space` / `K` | During a count-in: cancel it and stay paused |
 | `Shift + R` | Metronome along with the video |
 | `[` / `]` | Set loop start / end |
 | `\` | Loop on / off |
+| `H` | Show / hide the tab window (with **Tabs** on) |
 
-In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nudge loop ends (‹ ›, Shift = 10 ms), **Snap to bars**, **Count in every repeat**, and **Tabs** (the tab player below). Saved per video.
+In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nudge loop ends (‹ ›, Shift = 10 ms), **Snap to bars**, **Count in every repeat**, and **Tabs** (the tab player below). Saved per video. Practice pauses itself during ads.
 
 ## Tab player
 
@@ -51,12 +53,14 @@ Switch **Tabs** on in the Practice panel: the **tab icon** appears in the player
 - Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
 - Bar 1 is the same one Practice uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.
 - Click a note to jump the video there. Speed changes and seeks are followed; the current speed shows in the window's bar and lights up when it changes.
-- Make the tab bigger or smaller with **− / +** next to the percentage, or Ctrl + mouse wheel over it. Drag the window by its title bar and resize it from its sides or bottom corners; **□** (or a double-click on the title bar) makes it fill the browser window.
+- Make the tab bigger or smaller with **− / +** next to the percentage, or Ctrl + mouse wheel over it. Drag the window by its title bar and resize it from its sides or bottom corners; **□** (or a double-click on the title bar) makes it fill the browser window. It works in fullscreen too.
+- During an ad the tab waits where the song was and ignores clicks.
 
 ## Troubleshooting
 
 - Nothing happens: refresh the tab; check the extension is allowed on youtube.com (🧩 icon).
 - No sound: click the page once first; check *Click volume* in settings.
+- "Couldn't load: …" in the popup after an update: reload the extension (`about:debugging` → **Reload**, or reinstall).
 
 ## Privacy
 
