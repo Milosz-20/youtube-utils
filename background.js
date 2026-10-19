@@ -56,3 +56,18 @@ browser.storage.onChanged.addListener((changes, area) => {
 browser.runtime.onMessage.addListener(msg => {
   if (msg && msg.type === 'sync-user-scripts') return syncUserScripts().then(() => true);
 });
+
+// Songsterr refuses to be shown inside another site (X-Frame-Options, CSP frame-ancestors), which
+// would leave the Songsterr tabs window on YouTube with an error page. Drop those two headers, but
+// only for Songsterr pages loaded as a frame of a YouTube page.
+const FRAME_BLOCKERS = new Set(['x-frame-options', 'content-security-policy']);
+const fromYouTube = url => /^https:\/\/www\.youtube\.com\//.test(url || '');
+browser.webRequest.onHeadersReceived.addListener(
+  details => {
+    const parent = (details.frameAncestors && details.frameAncestors[0] && details.frameAncestors[0].url) || details.originUrl;
+    if (!fromYouTube(parent)) return {};
+    return { responseHeaders: details.responseHeaders.filter(h => !FRAME_BLOCKERS.has(h.name.toLowerCase())) };
+  },
+  { urls: ['https://www.songsterr.com/*'], types: ['sub_frame'] },
+  ['blocking', 'responseHeaders'],
+);

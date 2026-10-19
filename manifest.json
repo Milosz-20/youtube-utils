@@ -19,16 +19,11 @@
     "48": "icons/icon.svg",
     "96": "icons/icon.svg"
   },
-  "permissions": ["storage", "declarativeNetRequestWithHostAccess"],
+  "permissions": ["storage", "webRequest", "webRequestBlocking"],
   "optional_permissions": ["userScripts"],
   "host_permissions": ["*://*.youtube.com/*", "*://www.songsterr.com/*"],
   "background": {
     "scripts": ["background.js"]
-  },
-  "declarative_net_request": {
-    "rule_resources": [
-      { "id": "songsterr-frame", "enabled": true, "path": "rules/songsterr-frame.json" }
-    ]
   },
   "action": {
     "default_title": "YouTube Utils",
