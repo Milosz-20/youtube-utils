@@ -86,6 +86,13 @@ content/bridge.js      isolated world: forwards saved settings to the page
 core/runtime.js        YTU.register() registry
 core/boot.js           starts/stops/reconfigures modules
 modules/*.js           features
+tabs/                  tab player window (extension page shown inside YouTube)
+vendor/                third-party code, see below
 options/               options page + toolbar popup
 package.ps1            version bump + zip for addons.mozilla.org
 ```
+
+## Vendored code
+
+- `vendor/alphatab/`: [alphaTab](https://www.alphatab.net) 1.8.4 (MPL-2.0), `dist/alphaTab.min.js` and the Bravura font from the `@coderline/alphatab` npm package.
+- `vendor/songsterr-convert.js`: the Songsterr → alphaTab converter from [songsterr-downloader](https://github.com/Metaphysics0/songsterr-downloader) (MIT), bundled with esbuild into a plain script with `@coderline/alphatab` mapped to the global `alphaTab` and the GP7 file patches stubbed out. It exposes `songsterrToScore(meta, revisions)`, which calls the converter's `buildScore`.

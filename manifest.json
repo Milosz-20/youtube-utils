@@ -21,7 +21,12 @@
   },
   "permissions": ["storage"],
   "optional_permissions": ["userScripts"],
-  "host_permissions": ["*://*.youtube.com/*"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://www.songsterr.com/*",
+    "https://dqsljvtekg760.cloudfront.net/*",
+    "https://d3d3l6a6rcgkaf.cloudfront.net/*"
+  ],
   "background": {
     "scripts": ["background.js"]
   },
@@ -34,6 +39,12 @@
     "page": "options/options.html",
     "open_in_tab": true
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["tabs/player.html"],
+      "matches": ["*://www.youtube.com/*"]
+    }
+  ],
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*"],
@@ -50,6 +61,7 @@
         "modules/default-quality.js",
         "modules/sponsorblock.js",
         "modules/count-in.js",
+        "modules/tab-player.js",
         "modules/block-shortcuts-help.js",
         "core/boot.js"
       ],

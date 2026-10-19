@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tab</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <header class="bar">
+    <select id="track" title="Track" hidden></select>
+    <span id="status" class="status"></span>
+    <button id="bar1" type="button" title="Press on the first beat of bar 1 in the video" hidden>Bar 1 is now</button>
+    <button id="pin" type="button" title="Press on the first beat of the bar the cursor is in, to fix drift from here on" hidden>This bar is now</button>
+    <button id="reset" type="button" class="icon" title="Forget the sync for this video" hidden>↺</button>
+    <button id="edit" type="button" class="icon" title="Change the Songsterr link">🔗</button>
+  </header>
+  <main>
+    <div id="score"></div>
+    <div id="note" class="note" hidden>
+      <div id="noteText"></div>
+      <form id="form">
+        <input id="url" type="url" placeholder="https://www.songsterr.com/a/wsa/…-tab-s…" aria-label="Songsterr link">
+        <button type="submit" class="primary">Load</button>
+      </form>
+      <button id="grant" type="button" class="primary" hidden>Allow access to Songsterr</button>
+      <div id="err" class="err"></div>
+      <button id="remove" type="button" hidden>Remove the link from this video</button>
+    </div>
+  </main>
+  <script src="../vendor/alphatab/alphaTab.min.js"></script>
+  <script src="../vendor/songsterr-convert.js"></script>
+  <script src="songsterr.js"></script>
+  <script src="player.js"></script>
+</body>
+</html>

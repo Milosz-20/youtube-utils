@@ -22,6 +22,7 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 | **Precise playback speed** | `Shift + >` / `Shift + <` change speed in 0.05× steps. |
 | **SponsorBlock** | Skips sponsor segments automatically or shows a Skip button. |
 | **Count-in & loop** | Count-in, metronome and A–B loop for playing along. See below. |
+| **Tab player** | A Songsterr tab next to the video, drawn by the extension, with the cursor following the video. See below. |
 | **Block Shift + ?** | Disables YouTube's shortcuts overlay. |
 
 ## Count-in & loop
@@ -53,3 +54,11 @@ In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nu
 No data is collected. SponsorBlock receives only a 4-character hash prefix of the video ID.
 
 Development: [DEVELOPING.md](DEVELOPING.md)
+
+## Tab player
+
+Click the **tab icon** in the player bar, paste the link to the song on Songsterr and click **Load**. The first time, Firefox asks to let the extension read Songsterr.
+
+- Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
+- Press **Bar 1 is now** on the first beat of bar 1. If the cursor drifts later in the song, press **This bar is now** on the first beat of the bar it should be in.
+- Click a note to jump the video there. Speed changes and seeks are followed.
