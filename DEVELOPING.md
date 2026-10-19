@@ -84,6 +84,7 @@ manifest.json          module list lives in content_scripts
 background.js          registers user scripts with Firefox
 content/bridge.js      isolated world: forwards saved settings to the page
 content/songsterr-frame.js  on songsterr.com, inside the tab window only: hides the page around the tab, moves its cursor
+rules/songsterr-frame.json  lets Songsterr load in an iframe on youtube.com (drops its frame-blocking headers there only)
 core/runtime.js        YTU.register() registry
 core/boot.js           starts/stops/reconfigures modules
 modules/*.js           features

@@ -50,7 +50,7 @@ In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nu
 2. Drag the window by its title bar, resize it from the bottom-right corner.
 3. Set the tempo and bar 1 in *Count-in & loop* (above). From then on the tab's cursor moves bar by bar with the video: at any speed, after seeking, and around the loop.
 
-If the tab has bars before the song's bar 1 that the video doesn't (or the other way round), shift it with **− / +** in the title bar. If Songsterr won't load inside the page, the window offers to open it in a separate window, which follows the video the same way.
+If the tab has bars before the song's bar 1 that the video doesn't (or the other way round), shift it with **− / +** in the title bar. Songsterr normally refuses to be shown inside other sites; the extension lifts that only for Songsterr opened inside YouTube. If it still won't load, the window offers to open it in a separate window, which follows the video the same way.
 
 ## Troubleshooting
 

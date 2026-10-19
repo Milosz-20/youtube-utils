@@ -297,8 +297,8 @@ YTU.register({
       // Songsterr's page reports in when it loads. If it never does, it refused to be shown inside
       // another site, or the extension isn't allowed on songsterr.com.
       readyTimer = setTimeout(() => {
-        if (!ready) showBlocked('Songsterr didn\'t load inside the page.', false);
-      }, 12000);
+        if (!ready) showBlocked('Songsterr didn\'t load inside the page. Check that the extension is allowed on songsterr.com (🧩 icon), then reload.', false);
+      }, 6000);
       refreshHead();
     }
 
