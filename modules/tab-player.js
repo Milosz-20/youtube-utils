@@ -214,8 +214,7 @@ YTU.register({
       };
       for (const y of [6, 10, 14, 18]) add('path', { d: `M3 ${y}h18` }); // strings
       add('path', { d: 'M3 6v12M21 6v12' });                            // bar lines
-      add('circle', { cx: '9', cy: '10', r: '2', fill: '#fff', stroke: 'none' });
-      add('circle', { cx: '15', cy: '14', r: '2', fill: '#fff', stroke: 'none' });
+      add('path', { d: 'M9 8.5v7l6-3.5z', fill: '#fff', stroke: '#fff', 'stroke-linejoin': 'round' }); // play mark, unlike the Songsterr button
       return svg;
     }
 

@@ -173,6 +173,25 @@
   }
 
   renderModules();
+
+  // ---------------------------------------------------------------- site access
+  // Firefox lets you switch off an add-on's access to sites (about:addons → Permissions), and doesn't
+  // always grant it on install. Without it no feature runs, so offer to turn it back on.
+  const SITES = { origins: browser.runtime.getManifest().host_permissions };
+
+  async function refreshSiteAccess() {
+    $('#site-access').hidden = await browser.permissions.contains(SITES);
+  }
+
+  $('#site-grant').onclick = async () => {
+    // Must be called straight from the click for Firefox to show the prompt.
+    try { await browser.permissions.request(SITES); } catch (err) { console.warn('[YouTube Utils] permission request failed', err); }
+    refreshSiteAccess();
+  };
+  browser.permissions.onAdded.addListener(refreshSiteAccess);
+  browser.permissions.onRemoved.addListener(refreshSiteAccess);
+  refreshSiteAccess();
+
   if (isPopup) return;
 
   // ---------------------------------------------------------------- user scripts

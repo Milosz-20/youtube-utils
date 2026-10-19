@@ -137,8 +137,8 @@ body.popup header { padding: 10px 12px; gap: 8px; }
 body.popup header h1 { font-size: 15px; }
 body.popup header img { width: 22px; height: 22px; }
 body.popup main { padding: 8px 8px 10px; }
-body.popup main > section:first-child > h2,
-body.popup main > section:first-child > .hint,
+body.popup main > section:first-of-type > h2,
+body.popup main > section:first-of-type > .hint,
 body.popup #user-scripts-section { display: none; }
 
 .row-compact {
