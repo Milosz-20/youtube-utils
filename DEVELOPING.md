@@ -83,6 +83,7 @@ Scripts run in the page context. Available Tampermonkey functions: `GM_getValue`
 manifest.json          module list lives in content_scripts
 background.js          registers user scripts with Firefox
 content/bridge.js      isolated world: forwards saved settings to the page
+content/songsterr-frame.js  on songsterr.com, inside the tab window only: hides the page around the tab, moves its cursor
 core/runtime.js        YTU.register() registry
 core/boot.js           starts/stops/reconfigures modules
 modules/*.js           features
