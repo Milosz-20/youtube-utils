@@ -4,7 +4,7 @@
 YTU.register({
   id: 'tab-player',
   name: 'Tab player',
-  description: 'Attach a Songsterr tab to a video and read it in a floating window you can drag and resize. The extension draws the tab itself, so it shows in Zen and Firefox too. The cursor follows the video at any speed; click a note to jump the video there. Bar 1 is shared with Count-in & loop: set it in either place (type it, nudge it, or press Here on the beat). Press "Pin bar" on a later downbeat if the cursor drifts.',
+  description: 'Attach a Songsterr tab to a video and read it in a floating window you can drag and resize. The extension draws the tab itself, so it shows in Zen and Firefox too. The cursor follows the video at any speed; click a note to jump the video there. Switch it on per video with Tabs in the Practice panel; then the tab button and H appear. Bar 1 is shared with Practice: set it in either place (type it, nudge it, or press Here on the beat). Press "Pin bar" on a later downbeat if the cursor drifts.',
 
   run(ctx) {
     const disposers = [];
@@ -54,8 +54,17 @@ YTU.register({
       return (data && data.video_id) || new URLSearchParams(location.search).get('v');
     }
 
-    // Bar 1 is Count-in & loop's: the tab window shows and moves that one, so it's set in one place.
+    // Bar 1 is Practice's: the tab window shows and moves that one, so it's set in one place.
     const SONG = id => 'ytu:count-in:song:' + id;
+    const readSong = id => { try { return JSON.parse(localStorage.getItem(SONG(id))) || {}; } catch { return {}; } };
+    // The Tabs switch in Practice. Off: no button, no H, window hidden (and remembered as open or not).
+    function tabsOn(id) {
+      if (!id) return false;
+      const song = readSong(id);
+      const practice = song.enabled != null ? song.enabled : !!song.bpm;
+      return practice && !!song.tabs;
+    }
+    let enabled = false;
     function bar1Ms(id) {
       try {
         const song = JSON.parse(localStorage.getItem(SONG(id)));
@@ -68,7 +77,7 @@ YTU.register({
       const detail = { videoId: id, start: ms / 1000, handled: false };
       document.dispatchEvent(new CustomEvent('ytu:set-bar1', { detail }));
       if (detail.handled) return;
-      // Count-in & loop is switched off: keep it in its storage for when it's back.
+      // Practice is switched off: keep it in its storage for when it's back.
       let song = {};
       try { song = JSON.parse(localStorage.getItem(SONG(id))) || {}; } catch { /* start fresh */ }
       song.start = detail.start;
@@ -257,7 +266,7 @@ YTU.register({
 
     // H shows or hides the window. Its keys only reach this page; the tab window sends its own here.
     on(window, 'keydown', e => {
-      if (e.key !== 'h' && e.key !== 'H' || e.ctrlKey || e.metaKey || e.altKey || e.repeat || !isWatch()) return;
+      if (e.key !== 'h' && e.key !== 'H' || e.ctrlKey || e.metaKey || e.altKey || e.repeat || !isWatch() || !enabled) return;
       const t = e.target;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       e.preventDefault();
@@ -266,7 +275,7 @@ YTU.register({
     }, true);
 
     // Keys pressed while the tab window has focus. Play/pause and seeking are done here, since YouTube
-    // may ignore made-up key presses; the rest (Count-in's G, R, [ ] and so on) is passed on as one.
+    // may ignore made-up key presses; the rest (Practice's G, R, [ ] and so on) is passed on as one.
     function pageKey(m) {
       const v = video();
       if (!v) return;
@@ -313,7 +322,7 @@ YTU.register({
 
     function ensureUi() {
       const p = player();
-      if (!isWatch() || !p) {
+      if (!isWatch() || !p || !enabled) {
         if (btn) btn.remove();
         if (win) win.hidden = true;
         return;
@@ -330,14 +339,16 @@ YTU.register({
     // -------------------------------------------------------------- page tracking
     function poll() {
       const id = isWatch() ? currentVideoId() : null;
+      const was = enabled;
+      enabled = tabsOn(id);
       ensureUi();
-      if (id !== videoId) {
+      if (id !== videoId || enabled !== was) {
         videoId = id;
-        // The window stays open from video to video if you left it open.
-        if (id && win && win.hidden && ctx.storage.get('open', false)) setOpen(true);
+        // The window stays open from video to video, and when switched back on, if you left it open.
+        if (enabled && win && win.hidden && ctx.storage.get('open', false)) setOpen(true);
         sendVideo();
       } else if (videoId && ready && bar1Ms(videoId) !== sentBar1) {
-        sendVideo(); // bar 1 moved in Count-in & loop
+        sendVideo(); // bar 1 moved in Practice
       }
     }
     const timer = setInterval(poll, 500);

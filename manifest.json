@@ -1,7 +1,7 @@
 ﻿{
   "manifest_version": 3,
   "name": "YouTube Utils",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "YouTube tweaks: Shorts filter, count-in, metronome and A-B loop for practice, Songsterr tabs next to the video, SponsorBlock, quality and speed controls.",
   "browser_specific_settings": {
     "gecko": {

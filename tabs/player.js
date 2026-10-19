@@ -13,9 +13,9 @@
 
   // -------------------------------------------------------------- per-video record
   // { url, track (index into the tab's tracks), sync: alphaTab FlatSyncPoint[] for bars after bar 1,
-  //   plus bar 1 itself only while Count-in & loop has no bar 1 for this video }
+  //   plus bar 1 itself only while Practice has no bar 1 for this video }
   let videoId = null;
-  let bar1Linked = null; // ms where Count-in & loop's bar 1 is; the one place bar 1 is set, when it's set
+  let bar1Linked = null; // ms where Practice's bar 1 is; the one place bar 1 is set, when it's set
   let rec = {};
   const key = () => 'tab:' + videoId;
   async function readRec() {
@@ -114,7 +114,7 @@
     refreshStatus();
   }
 
-  // Bar 1 is shared with Count-in & loop: setting it here moves the metronome's bar 1 and the other
+  // Bar 1 is shared with Practice: setting it here moves the metronome's bar 1 and the other
   // way round. The YouTube side writes it there and reports back. Later sync points stay put.
   const isBar1 = p => p.barIndex === 0 && p.barOccurence === 0;
   const bar1Point = ms => ({ barIndex: 0, barOccurence: 0, barPosition: 0, millisecondOffset: ms });
