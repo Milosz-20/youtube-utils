@@ -32,7 +32,13 @@ YTU.register({
       .ytu-tp-head button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
       .ytu-tp-win iframe { display: block; flex: 1; width: 100%; min-height: 0; border: 0; background: #fff; }
       .ytu-tp-dragging iframe { pointer-events: none; }
-      .ytu-tp-grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize;
+      .ytu-tp-edge { position: absolute; z-index: 1; }
+      .ytu-tp-edge[data-e="l"] { left: 0; top: 26px; bottom: 0; width: 6px; cursor: ew-resize; }
+      .ytu-tp-edge[data-e="r"] { right: 0; top: 26px; bottom: 0; width: 6px; cursor: ew-resize; }
+      .ytu-tp-edge[data-e="b"] { left: 0; right: 0; bottom: 0; height: 6px; cursor: ns-resize; }
+      .ytu-tp-edge[data-e="lb"] { left: 0; bottom: 0; width: 16px; height: 16px; cursor: nesw-resize; }
+      .ytu-tp-max .ytu-tp-edge { display: none; }
+      .ytu-tp-grip { position: absolute; z-index: 2; right: 0; bottom: 0; width: 20px; height: 20px; cursor: nwse-resize;
         background: linear-gradient(135deg, transparent 50%, rgba(128, 128, 128, .7) 50%, rgba(128, 128, 128, .7) 60%, transparent 60%, transparent 70%, rgba(128, 128, 128, .7) 70%, rgba(128, 128, 128, .7) 80%, transparent 80%); }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -85,6 +91,7 @@ YTU.register({
     };
 
     let win = null;
+    const ui = {};
     let frame = null;
     let ready = false;
     let videoId = null;
@@ -97,6 +104,19 @@ YTU.register({
       Object.assign(win.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
     }
     const savedBox = () => ctx.storage.get('box', null) || { x: window.innerWidth - 680, y: 80, w: 660, h: 420 };
+    // Maximised: the whole browser window bar a small margin, until you restore it.
+    const fullBox = () => ({ x: 12, y: 12, w: window.innerWidth - 24, h: window.innerHeight - 24 });
+    const isMax = () => !!ctx.storage.get('max', false);
+    function markMax(max) {
+      ctx.storage.set('max', max);
+      win.classList.toggle('ytu-tp-max', max);
+      ui.maxBtn.textContent = max ? '❐' : '□';
+      ui.maxBtn.title = max ? 'Restore' : 'Maximise (or double-click the title bar)';
+    }
+    function setMax(max) {
+      markMax(max);
+      place(max ? fullBox() : savedBox());
+    }
     function boxFromStyle() {
       const r = win.getBoundingClientRect();
       return { x: r.left, y: r.top, w: r.width, h: r.height };
@@ -111,12 +131,20 @@ YTU.register({
         handle.setPointerCapture(e.pointerId);
         const start = { px: e.clientX, py: e.clientY, ...boxFromStyle() };
         win.classList.add('ytu-tp-dragging');
-        const move = ev => place(apply(start, ev.clientX - start.px, ev.clientY - start.py));
+        let moved = false;
+        const move = ev => {
+          const dx = ev.clientX - start.px, dy = ev.clientY - start.py;
+          if (!moved && Math.abs(dx) + Math.abs(dy) < 3) return; // a click (or double-click), not a drag
+          moved = true;
+          place(apply(start, dx, dy));
+        };
         const up = () => {
           handle.removeEventListener('pointermove', move);
           handle.removeEventListener('pointerup', up);
           handle.removeEventListener('pointercancel', up);
           win.classList.remove('ytu-tp-dragging');
+          if (!moved) return;
+          if (isMax()) markMax(false); // dragged out of the maximised window: it stays where you left it
           ctx.storage.set('box', boxFromStyle());
         };
         handle.addEventListener('pointermove', move);
@@ -133,12 +161,23 @@ YTU.register({
       close.type = 'button';
       close.title = 'Close';
       close.addEventListener('click', e => { e.stopPropagation(); setOpen(false); });
-      head.append(el('span', null, 'Tab'), close);
+      ui.maxBtn = el('button', null, '□');
+      ui.maxBtn.type = 'button';
+      ui.maxBtn.addEventListener('click', e => { e.stopPropagation(); setMax(!isMax()); });
+      head.addEventListener('dblclick', e => { if (!e.target.closest('button')) setMax(!isMax()); });
+      head.append(el('span', null, 'Tab'), ui.maxBtn, close);
       const grip = el('div', 'ytu-tp-grip');
-      w.append(head, grip);
+      // Resize from either side, the bottom, or the bottom corners.
+      const edges = ['l', 'r', 'b', 'lb'].map(e => { const d = el('div', 'ytu-tp-edge'); d.dataset.e = e; return d; });
+      w.append(head, ...edges, grip);
       win = w;
       dragger(head, (b, dx, dy) => ({ ...b, x: b.x + dx, y: b.y + dy }));
       dragger(grip, (b, dx, dy) => ({ ...b, w: b.w + dx, h: b.h + dy }));
+      const fromLeft = (b, dx) => { const nw = Math.max(320, b.w - dx); return { x: b.x + b.w - nw, w: nw }; };
+      dragger(edges[0], (b, dx) => ({ ...b, ...fromLeft(b, dx) }));
+      dragger(edges[1], (b, dx) => ({ ...b, w: b.w + dx }));
+      dragger(edges[2], (b, dx, dy) => ({ ...b, h: b.h + dy }));
+      dragger(edges[3], (b, dx, dy) => ({ ...b, ...fromLeft(b, dx), h: b.h + dy }));
       return w;
     }
 
@@ -152,12 +191,12 @@ YTU.register({
         ready = false;
         return;
       }
-      place(savedBox());
+      setMax(isMax());
       if (!frame && playerUrl()) {
         frame = el('iframe');
         frame.title = 'Tab';
         frame.src = playerUrl();
-        win.insertBefore(frame, win.lastChild);
+        win.insertBefore(frame, win.children[1]);
       }
     }
     const isOpen = () => !!win && !win.hidden;
@@ -213,7 +252,7 @@ YTU.register({
     });
 
     // Keep the window on screen when the browser window shrinks.
-    on(window, 'resize', () => { if (isOpen()) place(boxFromStyle()); });
+    on(window, 'resize', () => { if (isOpen()) place(isMax() ? fullBox() : boxFromStyle()); });
 
     // -------------------------------------------------------------- player bar button
     let btn = null;
