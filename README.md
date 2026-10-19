@@ -22,7 +22,7 @@ To update, install the newer `.xpi` the same way. Settings are kept.
 | **Precise playback speed** | `Shift + >` / `Shift + <` change speed in 0.05× steps. |
 | **SponsorBlock** | Skips sponsor segments automatically or shows a Skip button. |
 | **Count-in & loop** | Count-in, metronome and A–B loop for playing along. See below. |
-| **Songsterr tabs** | The song's Songsterr tab in a floating window next to the video, following along bar by bar. See below. |
+| **Songsterr tabs** | The song's Songsterr tab in a window next to the video, following along bar by bar. See below. |
 | **Block Shift + ?** | Disables YouTube's shortcuts overlay. |
 
 ## Count-in & loop
@@ -46,11 +46,11 @@ In the panel: adjust tempo and bar 1, number of clicks, beats per bar, sound, nu
 
 ## Songsterr tabs
 
-1. Click the **tab icon** in the player bar, paste the song's Songsterr link and press **Save**. The link is remembered for that video.
-2. Drag the window by its title bar, resize it from the bottom-right corner.
+1. Click the **tab icon** in the player bar, paste the song's Songsterr link and press **Save**. The link is remembered for that video, and the tab opens in a window of its own showing only the tab. Place it next to YouTube however suits you.
+2. Next time, the tab icon opens that window straight away. The small panel on YouTube can be dragged by its title bar; **×** closes both.
 3. Set the tempo and bar 1 in *Count-in & loop* (above). From then on the tab's cursor moves bar by bar with the video: at any speed, after seeking, and around the loop.
 
-If the tab has bars before the song's bar 1 that the video doesn't (or the other way round), shift it with **− / +** in the title bar. Songsterr normally refuses to be shown inside other sites; the extension lifts that only for Songsterr opened inside YouTube. If it still won't load, the window offers to open it in a separate window, which follows the video the same way.
+If the tab has bars before the song's bar 1 that the video doesn't (or the other way round), shift it with **− / +** in the title bar. The tab gets its own window because Songsterr refuses to be shown inside other pages, and Zen enforces that even for extensions.
 
 ## Troubleshooting
 

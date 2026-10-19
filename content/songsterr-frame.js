@@ -1,11 +1,11 @@
-// Runs on songsterr.com, but only inside the tab window that modules/songsterr.js opens on YouTube
-// (an iframe, or a popup window when the iframe is refused). It hides everything but the tab and
-// moves Songsterr's cursor to the bar YouTube asks for, so the tab follows the video.
+// Runs on songsterr.com, but only inside the tab window that modules/songsterr.js opens from YouTube.
+// It hides everything but the tab and moves Songsterr's cursor to the bar YouTube asks for, so the
+// tab follows the video.
 //
 // Songsterr's markup is theirs and changes; every selector it depends on is in SEL below.
 (() => {
   const NAME = 'ytu-songsterr'; // window name modules/songsterr.js gives the frame or popup
-  const host = window.parent !== window ? window.parent : window.opener;
+  const host = window.opener;
   if (window.name !== NAME || !host) return;
   const YT_ORIGIN = 'https://www.youtube.com';
 

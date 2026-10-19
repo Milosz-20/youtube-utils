@@ -1,8 +1,8 @@
-// Songsterr tabs in a floating window next to the video, with the tab's cursor following the song.
+// Songsterr tabs in a window next to the video, with the tab's cursor following the song.
 YTU.register({
   id: 'songsterr',
   name: 'Songsterr tabs',
-  description: 'Attach a Songsterr tab to a video and read it in a floating window you can drag and resize. Click the tab icon in the player bar to paste the link; it\'s remembered for that video. Once you\'ve set the tempo and bar 1 in Count-in & loop, the tab\'s cursor moves bar by bar with the video, at any speed, through seeks and loops.',
+  description: 'Attach a Songsterr tab to a video and read it in a window of its own next to the video. Click the tab icon in the player bar to paste the link; it\'s remembered for that video. Once you\'ve set the tempo and bar 1 in Count-in & loop, the tab\'s cursor moves bar by bar with the video, at any speed, through seeks and loops.',
   settings: {
     tabOnly: { type: 'boolean', label: 'Show only the tab (hide Songsterr\'s menus and toolbar)', default: true },
     follow: { type: 'boolean', label: 'Move the tab\'s cursor along with the video', default: true },
@@ -25,7 +25,7 @@ YTU.register({
       .ytu-tab-btn.ytu-tab-set .ytu-tab-dot { fill: #3ea6ff; }
       .ytu-tab-win {
         position: fixed; z-index: 2400; display: flex; flex-direction: column; box-sizing: border-box;
-        min-width: 320px; min-height: 180px; border-radius: 12px; overflow: hidden;
+        width: 380px; max-width: calc(100vw - 16px); border-radius: 12px; overflow: hidden;
         background: rgba(30, 30, 30, .94); backdrop-filter: blur(20px) saturate(1.2);
         border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
         color: #f1f1f1; font: 400 13px/1.35 Roboto, Arial, sans-serif;
@@ -48,15 +48,9 @@ YTU.register({
       .ytu-tab-offset[hidden] { display: none; }
       .ytu-tab-win .ytu-tab-offset button { width: 24px; padding: 0; background: none; font-size: 15px; }
       .ytu-tab-offset span { min-width: 64px; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
-      .ytu-tab-body { position: relative; flex: 1; min-height: 0; background: #fff; }
-      .ytu-tab-body iframe { display: block; width: 100%; height: 100%; border: 0; }
-      .ytu-tab-dragging .ytu-tab-body iframe { pointer-events: none; }
-      .ytu-tab-note {
-        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-        padding: 16px; background: #1e1e1e; text-align: center; color: rgba(255, 255, 255, .75);
-      }
+      .ytu-tab-note { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 12px 14px; text-align: center; color: rgba(255, 255, 255, .75); }
       .ytu-tab-note[hidden] { display: none; }
-      .ytu-tab-note form { display: flex; gap: 8px; width: 100%; max-width: 460px; }
+      .ytu-tab-note form { display: flex; gap: 8px; width: 100%; }
       .ytu-tab-note input {
         flex: 1; min-width: 0; height: 32px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, .15); border-radius: 16px;
         background: rgba(0, 0, 0, .3); color: #fff; font: 400 13px Roboto, Arial, sans-serif;
@@ -66,8 +60,6 @@ YTU.register({
       .ytu-tab-win .ytu-tab-note button.ytu-tab-primary:hover { background: #d9d9d9; }
       .ytu-tab-err { color: #ff8a80; font-size: 12px; }
       .ytu-tab-err:empty { display: none; }
-      .ytu-tab-grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; z-index: 1;
-        background: linear-gradient(135deg, transparent 50%, rgba(128, 128, 128, .7) 50%, rgba(128, 128, 128, .7) 60%, transparent 60%, transparent 70%, rgba(128, 128, 128, .7) 70%, rgba(128, 128, 128, .7) 80%, transparent 80%); }
     `;
     (document.head || document.documentElement).appendChild(style);
     disposers.push(() => style.remove());
@@ -82,7 +74,7 @@ YTU.register({
       return (data && data.video_id) || new URLSearchParams(location.search).get('v');
     }
 
-    // Only Songsterr tab pages: anything else in the frame would be someone else's page on YouTube.
+    // Only Songsterr tab pages: the window must not be pointed at anyone else's site.
     function parseLink(text) {
       let u;
       try { u = new URL(String(text).trim()); } catch { return null; }
@@ -115,7 +107,10 @@ YTU.register({
       return { start: song.start || 0, bar: (60 / song.bpm) * (song.perBar || perBar) };
     }
 
-    // -------------------------------------------------------------- window
+    // -------------------------------------------------------------- panel and tab window
+    // Browsers (Zen, and Firefox with some settings) refuse to show Songsterr inside another page, so
+    // the tab opens in a window of its own. The panel on YouTube holds the link, the bar shift and
+    // the status; the tab window follows the video from beside it.
     const el = (tag, cls, text) => {
       const e = document.createElement(tag);
       if (cls) e.className = cls;
@@ -130,58 +125,50 @@ YTU.register({
       return b;
     };
 
-    let win = null;
-    let frame = null;       // the iframe, while the tab is shown in the page
-    let popup = null;       // the separate window, when the page can't show Songsterr
-    let ready = false;      // the Songsterr side answered
-    let readyTimer = null;
+    let win = null;         // the panel on YouTube
+    let popup = null;       // the tab window
+    let popupUrl = null;    // the tab it shows (its location is another site's, so we can't read it)
+    let ready = false;      // the tab window's page reported in
     let lastBar = null;     // the bar we last sent
-    let usePopup = !!ctx.storage.get('popup', false);
     const ui = {};
 
-    const target = () => (popup && !popup.closed ? popup : frame && frame.contentWindow);
+    const popupOpen = () => !!popup && !popup.closed;
+    const target = () => (popupOpen() ? popup : null);
     function send(msg) {
       const t = target();
       if (t && ready) t.postMessage(msg, SONGSTERR);
     }
 
-    function place(box) {
-      const w = Math.min(Math.max(320, box.w), window.innerWidth);
-      const h = Math.min(Math.max(180, box.h), window.innerHeight);
-      const x = Math.min(Math.max(0, box.x), window.innerWidth - Math.min(w, 120));
-      const y = Math.min(Math.max(0, box.y), window.innerHeight - 36);
-      Object.assign(win.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
-      return { x, y, w, h };
+    function place(pos) {
+      const r = win.getBoundingClientRect();
+      const x = Math.min(Math.max(0, pos.x), window.innerWidth - Math.min(r.width || 380, 120));
+      const y = Math.min(Math.max(0, pos.y), window.innerHeight - 36);
+      Object.assign(win.style, { left: x + 'px', top: y + 'px' });
+      return { x, y };
     }
-    function savedBox() {
-      return ctx.storage.get('box', null) || { x: window.innerWidth - 640, y: 80, w: 620, h: 420 };
+    const savedPos = () => ctx.storage.get('pos', null) || { x: window.innerWidth - 400, y: 80 };
+    function currentPos() {
+      const r = win.getBoundingClientRect();
+      return { x: r.left, y: r.top };
     }
 
-    // Drag by the title bar, resize from the corner. The iframe would swallow the pointer while it
-    // passes over it, so it ignores the mouse until you let go.
-    function dragger(handle, apply) {
+    function dragger(handle) {
       handle.addEventListener('pointerdown', e => {
         if (e.button !== 0 || e.target.closest('button, input')) return;
         e.preventDefault();
         handle.setPointerCapture(e.pointerId);
-        const start = { px: e.clientX, py: e.clientY, ...savedBoxFromStyle() };
-        win.classList.add('ytu-tab-dragging');
-        const move = ev => place(apply(start, ev.clientX - start.px, ev.clientY - start.py));
+        const start = { px: e.clientX, py: e.clientY, ...currentPos() };
+        const move = ev => place({ x: start.x + ev.clientX - start.px, y: start.y + ev.clientY - start.py });
         const up = () => {
           handle.removeEventListener('pointermove', move);
           handle.removeEventListener('pointerup', up);
           handle.removeEventListener('pointercancel', up);
-          win.classList.remove('ytu-tab-dragging');
-          ctx.storage.set('box', savedBoxFromStyle());
+          ctx.storage.set('pos', currentPos());
         };
         handle.addEventListener('pointermove', move);
         handle.addEventListener('pointerup', up);
         handle.addEventListener('pointercancel', up);
       });
-    }
-    function savedBoxFromStyle() {
-      const r = win.getBoundingClientRect();
-      return { x: r.left, y: r.top, w: r.width, h: r.height };
     }
 
     function buildWindow() {
@@ -201,11 +188,8 @@ YTU.register({
         el('span', 'ytu-tab-title', 'Tab'),
         ui.status,
         ui.offset,
-        btnEl('🔗', 'Change the Songsterr link', () => showForm(), 'ytu-tab-icon'),
-        ui.popBtn = btnEl('⧉', 'Open the tab in a separate window', () => openPopup(true), 'ytu-tab-icon'),
-        btnEl('×', 'Close', () => setOpen(false), 'ytu-tab-icon'));
-
-      const body = el('div', 'ytu-tab-body');
+        ui.linkBtn = btnEl('🔗', 'Change the Songsterr link', () => showForm(), 'ytu-tab-icon'),
+        btnEl('×', 'Close the tab', () => setOpen(false), 'ytu-tab-icon'));
 
       ui.form = el('div', 'ytu-tab-note');
       const form = el('form');
@@ -218,22 +202,15 @@ YTU.register({
       form.append(ui.input, saveBtn);
       form.addEventListener('submit', e => { e.preventDefault(); submitLink(); });
       ui.err = el('div', 'ytu-tab-err');
-      ui.removeBtn = btnEl('Remove the link from this video', null, () => { tab = {}; save(); showForm(); refreshButton(); });
+      ui.removeBtn = btnEl('Remove the link from this video', null, () => { tab = {}; save(); closePopup(); showForm(); refreshButton(); });
       ui.form.append(el('div', null, 'Paste the link to this song\'s tab on Songsterr.'), form, ui.err, ui.removeBtn);
 
-      ui.blocked = el('div', 'ytu-tab-note');
-      ui.blockedText = el('div');
-      ui.blocked.append(ui.blockedText,
-        btnEl('Open in a separate window', null, () => openPopup(true), 'ytu-tab-primary'),
-        ui.retryBtn = btnEl('Try in the page again', null, () => { usePopup = false; ctx.storage.set('popup', false); closePopup(); load(); }));
+      // Shown when the tab window is closed, or the browser blocked it: opening a window needs a click.
+      ui.openNote = el('div', 'ytu-tab-note');
+      ui.openNote.append(btnEl('Open the tab', null, () => openPopup(), 'ytu-tab-primary'));
 
-      const grip = el('div', 'ytu-tab-grip');
-      body.append(ui.form, ui.blocked, grip);
-      w.append(head, body);
-      ui.body = body;
-
-      dragger(head, (b, dx, dy) => ({ ...b, x: b.x + dx, y: b.y + dy }));
-      dragger(grip, (b, dx, dy) => ({ ...b, w: b.w + dx, h: b.h + dy }));
+      w.append(head, ui.form, ui.openNote);
+      dragger(head);
       return w;
     }
 
@@ -244,6 +221,7 @@ YTU.register({
       refreshHead();
     }
 
+    // Runs from the Save click, so the browser lets it open the tab window.
     function submitLink() {
       const url = parseLink(ui.input.value);
       if (!url) {
@@ -253,13 +231,12 @@ YTU.register({
       tab = { url, offset: url === tab.url ? tab.offset || 0 : 0 };
       save();
       refreshButton();
-      load();
+      openPopup();
     }
 
     function showForm() {
-      unloadFrame();
-      ui.blocked.hidden = true;
       ui.form.hidden = false;
+      ui.openNote.hidden = true;
       ui.input.value = tab.url || '';
       ui.err.textContent = '';
       ui.removeBtn.hidden = !tab.url;
@@ -267,60 +244,35 @@ YTU.register({
       setTimeout(() => ui.input.focus(), 0);
     }
 
-    function showBlocked(text, canRetry) {
-      ui.form.hidden = true;
-      ui.blocked.hidden = false;
-      ui.blockedText.textContent = text;
-      ui.retryBtn.hidden = !canRetry;
-    }
-
-    function unloadFrame() {
-      clearTimeout(readyTimer);
-      if (frame) { frame.remove(); frame = null; }
-      ready = false;
-      lastBar = null;
-    }
-
-    // Shows the tab: in the page, or in the separate window if you chose that.
-    function load() {
-      unloadFrame();
+    function showTabState() {
       if (!tab.url) { showForm(); return; }
-      if (usePopup) { openPopup(false); return; }
       ui.form.hidden = true;
-      ui.blocked.hidden = true;
-      frame = el('iframe');
-      frame.name = NAME;
-      frame.title = 'Songsterr tab';
-      frame.referrerPolicy = 'no-referrer';
-      frame.src = tab.url;
-      ui.body.insertBefore(frame, ui.body.firstChild);
-      // Songsterr's page reports in when it loads. If it never does, it refused to be shown inside
-      // another site, or the extension isn't allowed on songsterr.com.
-      readyTimer = setTimeout(() => {
-        if (!ready) showBlocked('Songsterr didn\'t load inside the page. Check that the extension is allowed on songsterr.com (🧩 icon), then reload.', false);
-      }, 6000);
+      ui.openNote.hidden = popupOpen();
       refreshHead();
     }
 
-    // `byClick`: browsers only let a click open a new window; later videos reuse the one already open.
-    function openPopup(byClick) {
+    // Opens the tab window, or points the open one at this video's tab. A new window needs a click;
+    // after that, later videos reuse it.
+    function openPopup() {
       if (!tab.url) return;
-      unloadFrame();
-      if (popup && !popup.closed) {
+      lastBar = null; // re-send the bar
+      if (popupOpen() && popupUrl === tab.url) {
+        popup.focus();
+      } else if (popupOpen()) {
+        ready = false; // until the new page reports in
         popup.location.href = tab.url;
-      } else if (byClick) {
-        const box = savedBox();
-        popup = window.open(tab.url, NAME, `popup,width=${Math.round(box.w)},height=${Math.round(box.h)}`);
+      } else {
+        ready = false;
+        popup = window.open(tab.url, NAME, 'popup,width=900,height=520');
       }
-      if (byClick) { usePopup = true; ctx.storage.set('popup', true); }
-      if (popup && !popup.closed) showBlocked('The tab is open in a separate window and follows the video from there.', true);
-      else showBlocked('Open the tab in a separate window to read it next to the video.', true);
-      refreshHead();
+      popupUrl = popupOpen() ? tab.url : null;
+      showTabState();
     }
 
     function closePopup() {
-      if (popup && !popup.closed) popup.close();
+      if (popupOpen()) popup.close();
       popup = null;
+      popupUrl = null;
       ready = false;
     }
 
@@ -329,10 +281,10 @@ YTU.register({
       if (!win) return;
       win.hidden = !open;
       if (open) {
-        place(savedBox());
-        if (!frame && !(popup && !popup.closed)) load();
+        place(savedPos());
+        if (tab.url) openPopup();
+        else showForm();
       } else {
-        unloadFrame();
         closePopup();
       }
     }
@@ -345,9 +297,9 @@ YTU.register({
       ui.offset.hidden = !tab.url || !s.follow;
       const o = tab.offset || 0;
       ui.offsetVal.textContent = `${o > 0 ? '+' : ''}${o} bars`;
-      ui.popBtn.hidden = !tab.url;
       if (!tab.url) ui.status.textContent = '';
       else if (!s.follow) ui.status.textContent = '';
+      else if (!popupOpen()) ui.status.textContent = '';
       else if (!grid) ui.status.textContent = 'Set the tempo in Count-in to follow the video';
       else ui.status.textContent = lastBar ? `Bar ${lastBar}` : '';
     }
@@ -372,7 +324,6 @@ YTU.register({
       if (!t || e.source !== t || e.origin !== SONGSTERR) return;
       if (!e.data || e.data.type !== 'ytu-tab:ready') return;
       ready = true;
-      clearTimeout(readyTimer);
       lastBar = null;
       send({ type: 'ytu-tab:config', tabOnly: !!s.tabOnly });
       tick();
@@ -390,8 +341,8 @@ YTU.register({
       on(window, type, e => { if (win && e.target instanceof Node && win.contains(e.target)) e.stopImmediatePropagation(); }, true);
     }
 
-    // Keep the window on screen when the browser window shrinks.
-    on(window, 'resize', () => { if (isOpen()) place(savedBoxFromStyle()); });
+    // Keep the panel on screen when the browser window shrinks.
+    on(window, 'resize', () => { if (isOpen()) place(currentPos()); });
 
     // -------------------------------------------------------------- player bar button
     let btn = null;
@@ -451,14 +402,19 @@ YTU.register({
       if (id !== videoId) {
         videoId = id;
         tab = id ? ctx.storage.get('tab:' + id, {}) || {} : {};
-        unloadFrame();
-        if (popup && popup.closed) popup = null;
         refreshButton();
-        // The window stays open from video to video if you left it open, but only where there's a tab to show.
+        // The panel stays open from video to video if you left it open, but only where there's a tab to
+        // show; an open tab window switches to the new video's tab.
         const show = !!(id && tab.url && win && ctx.storage.get('open', false));
         if (win) win.hidden = !show;
-        if (show) { place(savedBox()); load(); }
+        if (show) {
+          place(savedPos());
+          if (popupOpen()) openPopup();
+          showTabState();
+        }
       }
+      // The tab window closed by hand: offer to reopen it.
+      if (popup && popup.closed) { popup = null; ready = false; if (isOpen() && tab.url) showTabState(); }
       refreshHead();
     }
     const timer = setInterval(poll, 500);
@@ -467,7 +423,6 @@ YTU.register({
 
     return () => {
       clearInterval(timer);
-      clearTimeout(readyTimer);
       for (const d of disposers) d();
       if (btn) btn.remove();
       if (win) win.remove();

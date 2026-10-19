@@ -19,7 +19,7 @@
     "48": "icons/icon.svg",
     "96": "icons/icon.svg"
   },
-  "permissions": ["storage", "webRequest", "webRequestBlocking"],
+  "permissions": ["storage"],
   "optional_permissions": ["userScripts"],
   "host_permissions": ["*://*.youtube.com/*", "*://www.songsterr.com/*"],
   "background": {
@@ -29,18 +29,6 @@
     "default_title": "YouTube Utils",
     "default_icon": "icons/icon.svg",
     "default_popup": "options/options.html?popup=1"
-  },
-  "sidebar_action": {
-    "default_title": "Songsterr tab",
-    "default_panel": "sidebar/tab.html",
-    "default_icon": "icons/icon.svg",
-    "open_at_install": false
-  },
-  "commands": {
-    "_execute_sidebar_action": {
-      "suggested_key": { "default": "Alt+Shift+Y" },
-      "description": "Show or hide the Songsterr tab sidebar"
-    }
   },
   "options_ui": {
     "page": "options/options.html",
