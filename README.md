@@ -1,6 +1,6 @@
 # YouTube Utils
 
-Firefox extension with YouTube tweaks. Every feature has its own on/off switch in the toolbar popup.
+Firefox and Chrome extension with YouTube tweaks. Every feature has its own on/off switch in the toolbar popup.
 
 ## Install
 
@@ -11,6 +11,17 @@ Requires Firefox 140+.
 3. Refresh open YouTube tabs.
 
 To update, install the newer `.xpi` the same way. Settings are kept.
+
+### Chrome
+
+Requires Chrome 120+ (or another Chromium browser: Edge, Brave, Opera…).
+
+1. Download the source (the `.zip` from the release, or **Code → Download ZIP**) and unpack it.
+2. Open `chrome://extensions`, switch on **Developer mode** (top right).
+3. **Load unpacked** → pick the unpacked folder (the one with `manifest.json`). It stays installed after restarts.
+4. Refresh open YouTube tabs.
+
+To update, replace the folder's contents and press ↻ on the extension in `chrome://extensions`. User scripts also need **Allow User Scripts** switched on in the extension's details.
 
 ## Features
 

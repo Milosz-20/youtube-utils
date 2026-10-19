@@ -10,6 +10,8 @@ Firefox only installs signed extensions permanently. For development, load it te
 
 A temporary copy takes over from an installed signed one with the same ID until the next restart. If Firefox refuses to load it, disable the installed one in `about:addons` first.
 
+The same folder runs in Chrome: `chrome://extensions` → **Developer mode** → **Load unpacked** → pick the folder; after a change press ↻ on the extension and refresh YouTube. One manifest serves both: Firefox uses `background.scripts` and ignores `service_worker`, Chrome the other way round, and Chrome ignores `browser_specific_settings`. Extension pages and scripts call `browser.*`; `compat.js` (and the first lines of `background.js` and `content/bridge.js`) point it at `chrome` in Chrome. Icons are PNG because Chrome doesn't take SVG; `icons/icon.svg` is their source.
+
 ## Releasing an update
 
 1. Change the code.

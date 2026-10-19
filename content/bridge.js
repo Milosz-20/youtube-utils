@@ -1,5 +1,7 @@
 // Runs in the extension's isolated world. Page-world modules can't use browser.storage,
 // so this forwards the saved settings to them (and again whenever they change).
+// Chrome has only `chrome`; Firefox has both. The rest of the code uses `browser`.
+if (typeof browser === 'undefined') globalThis.browser = chrome;
 (() => {
   // Page-world modules can't look up the extension's own address, which modules/tab-player.js needs.
   document.documentElement.dataset.ytuBase = browser.runtime.getURL('');
