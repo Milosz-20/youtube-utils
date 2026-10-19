@@ -36,6 +36,12 @@
     "default_icon": "icons/icon.svg",
     "open_at_install": false
   },
+  "commands": {
+    "_execute_sidebar_action": {
+      "suggested_key": { "default": "Alt+Shift+Y" },
+      "description": "Show or hide the Songsterr tab sidebar"
+    }
+  },
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
