@@ -262,11 +262,15 @@
   ui.grant.addEventListener('click', async () => {
     if (await browser.permissions.request({ origins: Songsterr.ORIGINS })) load();
   });
+  // Picked with the mouse: hand the keys back. Arrows stay in the list, so you can keep browsing tracks.
+  let trackByKey = false;
+  ui.track.addEventListener('keydown', () => { trackByKey = true; });
+  ui.track.addEventListener('pointerdown', () => { trackByKey = false; });
   ui.track.addEventListener('change', () => {
     rec.track = Number(ui.track.value);
     saveRec();
     showTrack(loaded.score.tracks[rec.track], false);
-    ui.track.blur(); // so the keys (speed, seeking, G…) reach the video again, not the track list
+    if (!trackByKey) ui.track.blur(); // so the keys (speed, seeking, G…) reach the video again
   });
   ui.bar1.addEventListener('click', () => setBar1(video.ms));
   $('b1Minus').addEventListener('click', () => setBar1(bar1Ms() - 50));
@@ -314,7 +318,7 @@
     const t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     // Held keys repeat for seeking and for Shift + > / < (speed), like on the page itself.
-    const repeats = e.key === 'ArrowLeft' || e.key === 'ArrowRight' || (e.shiftKey && /^(Period|Comma)$/.test(e.code));
+    const repeats = e.key === 'ArrowLeft' || e.key === 'ArrowRight' || (e.shiftKey && (/^(Period|Comma)$/.test(e.code) || ['>', '<', '.', ','].includes(e.key)));
     if (e.repeat && !repeats) return;
     e.preventDefault();
     if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { post({ type: 'ytu-tp:toggle' }); return; }
