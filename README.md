@@ -66,7 +66,7 @@ Development: [DEVELOPING.md](DEVELOPING.md)
 
 ## Tab player
 
-Click the **tab icon** in the player bar, paste the link to the song on Songsterr and click **Load**. The first time, Firefox asks to let the extension read Songsterr.
+Click the **tab icon** in the player bar (or press `H`), paste the link to the song on Songsterr and click **Load**. `H` hides and shows the window again; YouTube's keys and Count-in's keys keep working while you're clicking around in the tab. The first time, Firefox asks to let the extension read Songsterr.
 
 - Pick the track (guitar, bass, drums…) in the window. The link, track and sync are remembered for the video.
 - Bar 1 is the same one Count-in & loop uses, so set it in either place. In the window, type its time, nudge it with **−**/**+**, or press **Here** on its first beat. If the cursor drifts later in the song, press **Pin bar** on the first beat of the bar it should be in.

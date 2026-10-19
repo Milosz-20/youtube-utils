@@ -306,5 +306,17 @@
     }
   });
 
+  // Keys go to whichever frame has focus, so after a click in the tab YouTube wouldn't hear them.
+  // Pass them to the page: H hides this window, the rest acts on the video and the extension.
+  window.addEventListener('keydown', e => {
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { post({ type: 'ytu-tp:toggle' }); return; }
+    const { key, code, shiftKey, ctrlKey, altKey, metaKey } = e;
+    post({ type: 'ytu-tp:key', key, code, shiftKey, ctrlKey, altKey, metaKey });
+  });
+
   post({ type: 'ytu-tp:ready' });
 })();

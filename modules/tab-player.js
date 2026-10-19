@@ -159,7 +159,7 @@ YTU.register({
       const head = el('div', 'ytu-tp-head');
       const close = el('button', null, '×');
       close.type = 'button';
-      close.title = 'Close';
+      close.title = 'Hide (H)';
       close.addEventListener('click', e => { e.stopPropagation(); setOpen(false); });
       ui.maxBtn = el('button', null, '□');
       ui.maxBtn.type = 'button';
@@ -185,10 +185,10 @@ YTU.register({
       ctx.storage.set('open', open);
       if (!win) return;
       win.hidden = !open;
+      // Hidden, not closed: the tab stays loaded, so it's back at once.
       if (!open) {
-        if (frame) frame.remove();
-        frame = null;
-        ready = false;
+        // Keys pressed in the hidden frame would go nowhere; hand them back to the player.
+        if (frame && document.activeElement === frame) (player() || document.body).focus({ preventScroll: true });
         return;
       }
       setMax(isMax());
@@ -235,6 +235,10 @@ YTU.register({
         ready = true;
         sendVideo();
         sendTime();
+      } else if (m.type === 'ytu-tp:toggle') {
+        setOpen(false);
+      } else if (m.type === 'ytu-tp:key') {
+        pageKey(m);
       } else if (!v) {
         return;
       } else if (m.type === 'ytu-tp:seek') {
@@ -250,6 +254,30 @@ YTU.register({
         v.playbackRate = m.rate;
       }
     });
+
+    // H shows or hides the window. Its keys only reach this page; the tab window sends its own here.
+    on(window, 'keydown', e => {
+      if (e.key !== 'h' && e.key !== 'H' || e.ctrlKey || e.metaKey || e.altKey || e.repeat || !isWatch()) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setOpen(!isOpen());
+    }, true);
+
+    // Keys pressed while the tab window has focus. Play/pause and seeking are done here, since YouTube
+    // may ignore made-up key presses; the rest (Count-in's G, R, [ ] and so on) is passed on as one.
+    function pageKey(m) {
+      const v = video();
+      if (!v) return;
+      const k = m.key.length === 1 ? m.key.toLowerCase() : m.key;
+      const plain = !m.ctrlKey && !m.metaKey && !m.altKey && !m.shiftKey;
+      if (plain && (k === ' ' || k === 'k')) { if (v.paused) v.play(); else v.pause(); return; }
+      const seek = plain && { arrowleft: -5, arrowright: 5, j: -10, l: 10 }[k.toLowerCase()];
+      if (seek) { v.currentTime = Math.max(0, v.currentTime + seek); return; }
+      const ev = new KeyboardEvent('keydown', { ...m, bubbles: true, cancelable: true });
+      (document.activeElement && document.activeElement !== frame ? document.activeElement : document.body).dispatchEvent(ev);
+    }
 
     // Keep the window on screen when the browser window shrinks.
     on(window, 'resize', () => { if (isOpen()) place(isMax() ? fullBox() : boxFromStyle()); });
@@ -277,7 +305,7 @@ YTU.register({
       const b = el('button', 'ytp-button ytu-tp-btn');
       b.type = 'button';
       b.setAttribute('aria-label', 'Tab');
-      b.title = 'Tab';
+      b.title = 'Tab (H)';
       b.appendChild(tabIcon());
       b.addEventListener('click', e => { e.stopPropagation(); setOpen(!isOpen()); });
       return b;
